@@ -1,5 +1,5 @@
 {
-  "name": "English School – Lead landing a CRM + correo",
+  "name": "English School – Formulario landing → CRM + correo",
   "nodes": [
     {
       "parameters": {
@@ -22,7 +22,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// English School – valida, limpia y normaliza el lead del formulario de matrícula.\nconst PROGRAMS = [\"Inglés para niños\", \"Inglés para jóvenes y adultos\", \"Clases personalizadas\"];\nconst MODES = ['Grupal', 'Personalizada', 'Aún no sé', ''];\nconst EMAIL = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/;\nconst clean = (v, max) => String(v ?? '').replace(/[\\u0000-\\u001f\\u007f]/g, ' ').trim().slice(0, max);\n\nconst raw = $input.first().json.body ?? $input.first().json;\nconst headers = $input.first().json.headers ?? {};\nconst ip = (headers['x-forwarded-for'] || headers['x-real-ip'] || '').split(',')[0].trim() || null;\n\n// Anti-spam: honeypot + tiempo mínimo en página (2.5 s)\nconst ts = Number(raw.ts);\nconst spam = !!clean(raw.website_url, 200) || (ts && Date.now() - ts < 2500);\n\nconst nombre = clean(raw.name, 80);\nconst email = clean(raw.email, 120).toLowerCase();\nconst telefono = clean(raw.phone, 20).replace(/[^\\d+()\\s-]/g, '');\nconst programa = clean(raw.program, 60);\nconst sede = clean(raw.sede, 60);\nconst modalidad = clean(raw.mode, 20);\nconst mensajeUsuario = clean(raw.message, 1000);\n\nlet error = null;\nif (nombre.length < 2) error = 'name';\nelse if (telefono.replace(/\\D/g, '').length < 7) error = 'phone';\nelse if (email && !EMAIL.test(email)) error = 'email';\nelse if (!PROGRAMS.includes(programa)) error = 'program';\nelse if (!sede) error = 'sede';\nelse if (!MODES.includes(modalidad)) error = 'mode';\nelse if (!(raw.consent === 'yes' || raw.consent === 'on' || raw.consent === true)) error = 'consent';\n\nlet utm = {};\ntry { const p = JSON.parse(String(raw.utm || '{}')); for (const [k, v] of Object.entries(p)) if (typeof v === 'string') utm[k.slice(0, 30)] = v.slice(0, 500); } catch {}\n\n// Mensaje que ve el asesor en el CRM: sede + tipo de clase + lo que escribió la persona\nconst mensaje = [`Sede: ${sede}`, modalidad && `Tipo de clase: ${modalidad}`, mensajeUsuario && `Mensaje: ${mensajeUsuario}`].filter(Boolean).join(' · ');\n\nreturn [{\n  json: {\n    spam, error, valid: !spam && !error,\n    lead: {\n      id: $execution.id + '-' + Date.now().toString(36),\n      nombre, email: email || null, telefono,\n      sede, modalidad,\n      servicioInteres: programa,\n      leadCalificado: true,\n      mensaje,\n      pagina: clean(raw.page, 200) || '/',\n      canal: utm.gclid || utm.gbraid || utm.wbraid ? 'google-ads' : utm.fbclid ? 'meta-ads' : (utm.utm_source || 'organico'),\n      gclid: utm.gclid ?? null,\n      utm,\n      fecha: new Date().toISOString(),\n      fechaLocal: new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'full', timeStyle: 'short' }) + ' (Colombia)',\n      ip,\n      userAgent: clean(raw.userAgent, 300) || null,\n      referrer: clean(raw.referrer, 300) || null,\n    },\n    next: '/gracias/',\n  },\n}];"
+        "jsCode": "// English School – valida, limpia y normaliza el lead del formulario de matrícula.\nconst PROGRAMS = [\"Inglés para niños\", \"Inglés para jóvenes y adultos\", \"Clases personalizadas\"];\nconst MODES = ['Grupal', 'Personalizada', 'Aún no sé', ''];\nconst EMAIL = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/;\nconst clean = (v, max) => String(v ?? '').replace(/[\\u0000-\\u001f\\u007f]/g, ' ').trim().slice(0, max);\n\nconst raw = $input.first().json.body ?? $input.first().json;\nconst headers = $input.first().json.headers ?? {};\nconst ip = (headers['x-forwarded-for'] || headers['x-real-ip'] || '').split(',')[0].trim() || null;\n\n// Anti-spam: honeypot + tiempo mínimo en página (2.5 s)\nconst ts = Number(raw.ts);\nconst spam = !!clean(raw.website_url, 200) || (ts && Date.now() - ts < 2500);\n\nconst nombre = clean(raw.name, 80);\nconst email = clean(raw.email, 120).toLowerCase();\nconst telefono = clean(raw.phone, 20).replace(/[^\\d+()\\s-]/g, '');\nconst programa = clean(raw.program, 60);\nconst sede = clean(raw.sede, 60);\nconst modalidad = clean(raw.mode, 20);\nconst mensajeUsuario = clean(raw.message, 1000);\n\nlet error = null;\nif (nombre.length < 2) error = 'name';\nelse if (telefono.replace(/\\D/g, '').length < 7) error = 'phone';\nelse if (email && !EMAIL.test(email)) error = 'email';\nelse if (!PROGRAMS.includes(programa)) error = 'program';\nelse if (!sede) error = 'sede';\nelse if (!MODES.includes(modalidad)) error = 'mode';\nelse if (!(raw.consent === 'yes' || raw.consent === 'on' || raw.consent === true)) error = 'consent';\n\nlet utm = {};\ntry { const p = JSON.parse(String(raw.utm || '{}')); for (const [k, v] of Object.entries(p)) if (typeof v === 'string') utm[k.slice(0, 30)] = v.slice(0, 500); } catch {}\n\n// Mensaje que ve el asesor en el CRM: sede + tipo de clase + lo que escribió la persona\nconst mensaje = [`Sede: ${sede}`, modalidad && `Tipo de clase: ${modalidad}`, mensajeUsuario && `Mensaje: ${mensajeUsuario}`].filter(Boolean).join(' · ');\n\nreturn [{\n  json: {\n    spam, error, valid: !spam && !error,\n    lead: {\n      id: $execution.id + '-' + Date.now().toString(36),\n      nombre, email: email || null, telefono,\n      sede, modalidad,\n      servicioInteres: programa,\n      leadCalificado: true,\n      mensaje,\n      mensajeUsuario,\n      pagina: clean(raw.page, 200) || '/',\n      canal: utm.gclid || utm.gbraid || utm.wbraid ? 'google-ads' : utm.fbclid ? 'meta-ads' : (utm.utm_source || 'organico'),\n      gclid: utm.gclid ?? null,\n      utm,\n      fecha: new Date().toISOString(),\n      fechaLocal: new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'full', timeStyle: 'short' }) + ' (Colombia)',\n      ip,\n      userAgent: clean(raw.userAgent, 300) || null,\n      referrer: clean(raw.referrer, 300) || null,\n    },\n    next: '/gracias/',\n  },\n}];"
       },
       "id": "040fb4f8-e7f2-40cf-9d73-38d4b2186488",
       "name": "Validar y normalizar",
@@ -82,7 +82,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  nombre: $json.lead.nombre,\n  email: $json.lead.email,\n  telefono: $json.lead.telefono,\n  empresa: null,\n  ubicacion: $json.lead.sede,\n  servicioInteres: $json.lead.servicioInteres,\n  leadCalificado: $json.lead.leadCalificado,\n  mensaje: $json.lead.mensaje,\n  form: 'Landing English School – Matrículas',\n  landing_page: $json.lead.pagina,\n  utm_source: $json.lead.utm.utm_source || null,\n  utm_medium: $json.lead.utm.utm_medium || null,\n  utm_campaign: $json.lead.utm.utm_campaign || null,\n  utm_content: $json.lead.utm.utm_content || null,\n  utm_term: $json.lead.utm.utm_term || null,\n  gclid: $json.lead.gclid,\n  fbclid: $json.lead.utm.fbclid || null,\n  idioma: 'es',\n  referrer: $json.lead.referrer,\n  consentimiento: 'si',\n  lead_id_landing: $json.lead.id\n}) }}",
+        "jsonBody": "={{ JSON.stringify({\n  nombre: $json.lead.nombre,\n  email: $json.lead.email,\n  telefono: $json.lead.telefono,\n  mensaje: $json.lead.mensaje,\n  programa: $json.lead.servicioInteres,\n  sede: $json.lead.sede,\n  tipo_clase: $json.lead.modalidad || null,\n  servicioInteres: $json.lead.servicioInteres,\n  leadCalificado: $json.lead.leadCalificado,\n  ubicacion: $json.lead.sede,\n  canal: $json.lead.canal,\n  form: 'Landing English School – Matrículas',\n  landing_page: 'https://englishschool.growthdigital.marketing' + $json.lead.pagina,\n  utm_source: $json.lead.utm.utm_source || null,\n  utm_medium: $json.lead.utm.utm_medium || null,\n  utm_campaign: $json.lead.utm.utm_campaign || null,\n  utm_content: $json.lead.utm.utm_content || null,\n  utm_term: $json.lead.utm.utm_term || null,\n  gclid: $json.lead.gclid,\n  fbclid: $json.lead.utm.fbclid || null,\n  referrer: $json.lead.referrer,\n  consentimiento: 'si',\n  lead_id_landing: $json.lead.id\n}) }}",
         "options": {
           "timeout": 8000,
           "retry": {}
@@ -98,26 +98,32 @@
       ],
       "retryOnFail": true,
       "maxTries": 3,
-      "waitBetweenTries": 1000
+      "waitBetweenTries": 1000,
+      "notes": "Reemplazar REEMPLAZAR_TOKEN_ENGLISH_SCHOOL por el token de la fuente \"landing English School\" del cliente English School en el CRM.",
+      "notesInFlow": true
     },
     {
       "parameters": {
-        "fromEmail": "Growth Digital <info@growthdigital.marketing>",
-        "toEmail": "innovacionpcell@gmail.com",
-        "subject": "=🎓 Nuevo lead English School: {{ $('Validar y normalizar').item.json.lead.nombre }} · {{ $('Validar y normalizar').item.json.lead.sede }}",
+        "fromEmail": "English School <englishschool2019@gmail.com>",
+        "toEmail": "englishschool2019@gmail.com",
+        "subject": "=🎓 Nuevo interesado en matrícula: {{ $('Validar y normalizar').item.json.lead.nombre }} · {{ $('Validar y normalizar').item.json.lead.servicioInteres }} · Sede {{ $('Validar y normalizar').item.json.lead.sede }}",
         "emailFormat": "html",
-        "html": "={{ (() => { const l = $('Validar y normalizar').item.json.lead;\nconst esc = (s) => String(s ?? '—').replace(/[&<>\"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));\nconst tel = String(l.telefono || '').replace(/\\D/g, '');\nconst tel57 = tel.length === 10 ? '57' + tel : tel;\nconst first = (l.nombre || '').split(' ')[0];\nconst wa = `https://wa.me/${tel57}?text=${encodeURIComponent(`Hola ${first}, te escribimos de English School. Recibimos tus datos para matricularte en ${l.servicioInteres}. Te cuento las promociones vigentes y los horarios de la sede ${l.sede}.`)}`;\nconst btn = (href, label, bg) => `<td style=\"padding:0 8px 10px 0\"><a href=\"${href}\" style=\"display:inline-block;background:${bg};color:#fff;font-weight:700;font-size:14px;padding:12px 18px;border-radius:10px;text-decoration:none;font-family:Arial,sans-serif\">${label}</a></td>`;\nconst row = (k, v) => `<tr><td style=\"padding:9px 12px;border-bottom:1px solid #eceefa;color:#4a4d78;font-size:13px;width:130px\"><b>${k}</b></td><td style=\"padding:9px 12px;border-bottom:1px solid #eceefa;font-size:14px;color:#1c1e4a\">${v}</td></tr>`;\nreturn `<!DOCTYPE html><html><body style=\"margin:0;background:#f7f8fc;padding:24px 12px;font-family:Arial,sans-serif\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden\">\n<tr><td style=\"height:6px;background:#e22623;font-size:0\">&nbsp;</td></tr>\n<tr><td style=\"padding:24px 28px 8px\"><div style=\"font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#2f3185;font-weight:700\">Nuevo lead · Landing English School</div><h1 style=\"margin:6px 0 4px;font-size:22px;color:#1c1e4a\">${esc(l.nombre)}</h1><div style=\"color:#4a4d78;font-size:14px\">${esc(l.servicioInteres)} · Sede ${esc(l.sede)}</div></td></tr>\n<tr><td style=\"padding:12px 28px 4px\"><table role=\"presentation\"><tr>${btn(wa, '💬 WhatsApp', '#1faa53')}${btn('tel:' + l.telefono, '📞 Llamar', '#2f3185')}${btn('https://portal.growthdigital.marketing/', '📊 Ver en CRM', '#1c1e4a')}</tr></table></td></tr>\n<tr><td style=\"padding:8px 28px 24px\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"border:1px solid #eceefa;border-radius:12px\">\n${row('Teléfono', esc(l.telefono))}${row('Correo', esc(l.email))}${row('Programa', esc(l.servicioInteres))}${row('Sede', esc(l.sede))}${row('Tipo de clase', esc(l.modalidad))}${row('Mensaje', esc(l.mensaje))}${row('Canal', esc(l.canal))}${row('Fecha', esc(l.fechaLocal))}\n</table></td></tr></table></body></html>`; })() }}",
-        "options": {}
+        "html": "={{ (() => {\nconst l = $('Validar y normalizar').item.json.lead;\nconst esc = (s) => String(s ?? '').replace(/[&<>\"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));\nconst NAVY = '#2f3185', DEEP = '#1c1e4a', RED = '#e22623', CTA = '#b81f1c', YEL = '#ede549', BG = '#f7f8fc', LINE = '#e3e5f2', MUTED = '#4a4d78';\nlet tel = String(l.telefono || '').replace(/\\D/g, '');\nif (tel.length === 10 && tel.startsWith('3')) tel = '57' + tel;\nconst first = (l.nombre || '').trim().split(' ')[0] || '';\nconst prog = l.servicioInteres || 'inglés';\nconst sede = l.sede && l.sede !== 'Sin definir' ? `la sede ${l.sede}` : 'la sede más cercana a ti';\nconst wa = (t) => `https://wa.me/${tel}?text=${encodeURIComponent(t)}`;\n// Plantillas listas para contacto y remarketing (1 clic → WhatsApp o correo prellenado)\nconst T = [\n  { tag: '1 · Primer contacto (hoy)', txt: `¡Hola ${first}! 👋 Te escribimos de English School. Recibimos tus datos para ${prog}. Tenemos promociones de matrícula vigentes y cupos en ${sede}. ¿Te cuento horarios y valores?` },\n  { tag: '2 · Seguimiento (48 h)', txt: `Hola ${first}, ¿cómo vas? Te recuerdo que en English School aprendes inglés sin libros, sin tareas y sin estrés, con Título Técnico y nivel B2. Los cupos en ${sede} son limitados. ¿Te separo uno?` },\n  { tag: '3 · Última llamada promo', txt: `${first}, la promoción de matrícula de English School está por terminar y quería que no te la perdieras. ¿Agendamos tu matrícula esta semana en ${sede}? 🇺🇸📚` },\n];\nconst mailSubject = `Tu matrícula en English School – ${prog}`;\nconst mailBody = `Hola ${first},\\n\\nGracias por tu interés en English School. Recibimos tus datos para ${prog} en ${sede}.\\n\\nTenemos promociones de matrícula vigentes y cupos limitados. Responde este correo o escríbenos por WhatsApp y te compartimos horarios y valores.\\n\\nSin libros · Sin tareas · Sin estrés\\nEnglish School`;\nconst mailto = l.email ? `mailto:${l.email}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}` : null;\nconst btn = (href, label, bg, fg = '#ffffff') => href ? `<td style=\"padding:0 8px 10px 0\"><a href=\"${href}\" style=\"display:inline-block;background:${bg};color:${fg};font-weight:700;font-size:14px;padding:13px 18px;border-radius:999px;text-decoration:none;white-space:nowrap;font-family:Arial,Helvetica,sans-serif\">${label}</a></td>` : '';\nconst row = (k, v) => v ? `<tr><td style=\"padding:10px 14px;border-bottom:1px solid ${LINE};color:${MUTED};font-size:13px;width:130px;vertical-align:top\"><b>${k}</b></td><td style=\"padding:10px 14px;border-bottom:1px solid ${LINE};font-size:14px;color:${DEEP}\">${v}</td></tr>` : '';\nconst tpl = (t) => `<tr><td style=\"padding:0 0 12px\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:${BG};border:1px solid ${LINE};border-radius:12px\"><tr><td style=\"padding:14px 16px\"><div style=\"font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:${NAVY};font-weight:700;margin-bottom:6px\">${t.tag}</div><div style=\"font-size:14px;color:${DEEP};line-height:1.5;margin-bottom:10px\">${esc(t.txt)}</div><a href=\"${wa(t.txt)}\" style=\"display:inline-block;background:#1faa53;color:#fff;font-weight:700;font-size:13px;padding:9px 14px;border-radius:999px;text-decoration:none;font-family:Arial,Helvetica,sans-serif\">💬 Enviar por WhatsApp</a></td></tr></table></td></tr>`;\nconst utm = l.utm || {};\nreturn `<!DOCTYPE html><html lang=\"es\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Nuevo interesado</title></head>\n<body style=\"margin:0;background:${BG};padding:24px 12px;font-family:Arial,Helvetica,sans-serif\">\n<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:620px;margin:0 auto;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid ${LINE}\">\n  <tr><td style=\"background:${NAVY};padding:22px 28px\">\n    <div style=\"font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:700;color:#ffffff\">English School</div>\n    <div style=\"font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:#d9dbf2;margin-top:4px\">Medellín · Matrículas</div>\n  </td></tr>\n  <tr><td style=\"height:6px;font-size:0;background:repeating-linear-gradient(90deg,${RED} 0 24px,#ffffff 24px 48px);background-color:${RED}\">&nbsp;</td></tr>\n  <tr><td style=\"padding:24px 28px 6px\">\n    <span style=\"display:inline-block;background:${YEL};color:${DEEP};font-size:12px;font-weight:700;border-radius:999px;padding:4px 12px\">Nuevo interesado · ${esc(l.fechaLocal)}</span>\n    <h1 style=\"margin:12px 0 4px;font-family:Georgia,'Times New Roman',serif;font-size:26px;color:${DEEP}\">${esc(l.nombre)}</h1>\n    <div style=\"color:${MUTED};font-size:15px\">${esc(prog)} · ${esc(l.sede)}${l.modalidad ? ' · ' + esc(l.modalidad) : ''}</div>\n  </td></tr>\n  <tr><td style=\"padding:16px 28px 6px\"><table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\"><tr>\n    ${btn(wa(T[0].txt), '💬 WhatsApp', '#1faa53')}\n    ${btn('tel:+' + tel, '📞 Llamar', NAVY)}\n    ${btn(mailto, '✉️ Correo prellenado', CTA)}\n    ${btn('https://portal.growthdigital.marketing/', '📊 Ver en CRM', DEEP)}\n  </tr></table></td></tr>\n  <tr><td style=\"padding:10px 28px 8px\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"border:1px solid ${LINE};border-radius:12px;overflow:hidden\">\n    ${row('Celular', `<a href=\"tel:+${tel}\" style=\"color:${NAVY};text-decoration:none\"><b>${esc(l.telefono)}</b></a>`)}\n    ${row('Correo', l.email ? `<a href=\"mailto:${esc(l.email)}\" style=\"color:${NAVY}\">${esc(l.email)}</a>` : '<span style=\"color:#9a9cb8\">No lo dejó</span>')}\n    ${row('Programa', esc(prog))}\n    ${row('Sede', esc(l.sede))}\n    ${row('Tipo de clase', esc(l.modalidad))}\n    ${row('Mensaje', esc(l.mensajeUsuario))}\n    ${row('Origen', esc(l.canal) + (utm.utm_campaign ? ' · ' + esc(utm.utm_campaign) : ''))}\n  </table></td></tr>\n  <tr><td style=\"padding:18px 28px 4px\">\n    <div style=\"font-family:Georgia,'Times New Roman',serif;font-size:18px;font-weight:700;color:${DEEP};margin-bottom:4px\">Mensajes listos para cerrar la matrícula</div>\n    <div style=\"font-size:13px;color:${MUTED};margin-bottom:12px\">Un clic abre WhatsApp con el mensaje escrito. Úsalos en orden si no responde.</div>\n    <table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\">${T.map(tpl).join('')}</table>\n  </td></tr>\n  <tr><td style=\"padding:6px 28px 22px\"><div style=\"background:${BG};border-left:4px solid ${RED};border-radius:8px;padding:12px 14px;font-size:13px;color:${DEEP}\">⏱️ Contesta en los primeros 5 minutos: la probabilidad de matricular cae fuerte después de la primera hora.</div></td></tr>\n  <tr><td style=\"padding:14px 28px 22px;border-top:1px solid ${LINE};font-size:12px;color:${MUTED}\">Sin libros · Sin tareas · Sin estrés — English School · Lead ${esc(l.id)}</td></tr>\n</table></body></html>`; })() }}",
+        "options": {
+          "appendAttribution": false
+        }
       },
       "id": "be989fde-90f2-4066-b870-e78f6090c836",
-      "name": "Aviso por correo",
+      "name": "Aviso a English School (correo)",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
         680,
         400
       ],
-      "onError": "continueRegularOutput"
+      "onError": "continueRegularOutput",
+      "notes": "Credencial SMTP propia: \"SMTP English School\" → smtp.gmail.com, puerto 465, SSL, usuario englishschool2019@gmail.com, contraseña de aplicación de Google. No usar la credencial de Growth Digital.",
+      "notesInFlow": true
     },
     {
       "parameters": {
@@ -201,7 +207,7 @@
             "index": 0
           },
           {
-            "node": "Aviso por correo",
+            "node": "Aviso a English School (correo)",
             "type": "main",
             "index": 0
           }
@@ -226,17 +232,6 @@
         ]
       ]
     },
-    "Aviso por correo": {
-      "main": [
-        [
-          {
-            "node": "Esperar CRM + correo",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
     "Esperar CRM + correo": {
       "main": [
         [
@@ -244,6 +239,17 @@
             "node": "Responder OK",
             "type": "main",
             "index": 0
+          }
+        ]
+      ]
+    },
+    "Aviso a English School (correo)": {
+      "main": [
+        [
+          {
+            "node": "Esperar CRM + correo",
+            "type": "main",
+            "index": 1
           }
         ]
       ]
