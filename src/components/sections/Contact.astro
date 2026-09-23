@@ -50,7 +50,7 @@ const programs = SITE.programs.map((p) => p.name);
           <label for="lf-sede">{f.sede} *</label>
           <select id="lf-sede" name="sede" required>
             <option value="" disabled selected>{f.sedePh}</option>
-            {SITE.sedes.map((sd) => <option value={`${sd.name} (${sd.city})`}>{sedeLabel(sd)}</option>)}
+            {SITE.sedes.map((sd) => <option value={sd.name === sd.city ? sd.name : `${sd.name} (${sd.city})`}>{sedeLabel(sd)}</option>)}
             <option value="Sin definir">{f.sedeAny}</option>
           </select>
         </div>
