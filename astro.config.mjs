@@ -19,8 +19,9 @@ export default defineConfig({
   ],
   env: {
     schema: {
-      // Webhook de n8n del flujo PROPIO de English School (formulario → correo → CRM)
-      PUBLIC_N8N_WEBHOOK_URL: envField.string({ context: 'client', access: 'public', optional: true }),
+      // Webhook de n8n del flujo PROPIO de English School (n8n/english-school-lead-a-crm.json: formulario → CRM + correo).
+      // Tiene valor por defecto para no depender de variables en Hostinger; se puede sobrescribir con .env.
+      PUBLIC_N8N_WEBHOOK_URL: envField.string({ context: 'client', access: 'public', optional: true, default: 'https://automation.growthdigital.marketing/webhook/english-school-lead' }),
       // Google Tag Manager (opcional, carga diferida)
       PUBLIC_GTM_ID: envField.string({ context: 'client', access: 'public', optional: true }),
     },

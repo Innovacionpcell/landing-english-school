@@ -14,14 +14,16 @@ ${SITE.sedes.map((s) => `- ${sedeLabel(s)}${'address' in s ? `: ${s.address}, ${
 - La sede Guarne atiende el Oriente Antioqueño: ${SITE.oriente.join(', ')}.
 
 ## Programas
-${SITE.programs.map((p) => `- ${p.name} (${p.audience}, ${p.level}): ${p.description}`).join('\n')}
+${SITE.programs.map((p) => `- [${p.name}](${SITE.url}/#programa-${p.id}) (${p.audience}, ${p.level}): ${p.description}`).join('\n')}
 
 ## Contacto
-- Matrículas: ${SITE.url}/#matricula
-- WhatsApp: ${SITE.phone}
-- Correo: ${SITE.email}
+- [Matrículas y promociones](${SITE.url}/#matricula): formulario para reservar cupo
+- [WhatsApp](https://wa.me/${SITE.whatsappNumber}): ${SITE.phoneDisplay}
+- [Correo](mailto:${SITE.email}): ${SITE.email}
+- [Cómo llegar a la sede Bello](${SITE.mapsUrl})
+- [Sitio oficial](${SITE.officialSite})
+- [Política de datos](${SITE.url}/privacidad/)
 - Horario: ${SITE.hoursDisplay}
-- Sitio oficial: ${SITE.officialSite}
 `;
   return new Response(body, { headers: { 'content-type': 'text/plain; charset=utf-8' } });
 };

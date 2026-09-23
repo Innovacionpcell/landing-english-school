@@ -99,7 +99,7 @@
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 1000,
-      "notes": "Reemplazar 0a1ac404a7abad7427cc904615ec9ec93e5e por el token de la fuente \"landing English School\" del cliente English School en el CRM.",
+      "notes": "CRM · fuente \"landing English School\" (cliente English School)",
       "notesInFlow": true
     },
     {

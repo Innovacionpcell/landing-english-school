@@ -126,13 +126,9 @@ const programs = SITE.programs.map((p) => p.name);
       const body = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
       if (body.website_url) return; // honeypot
 
-      // Sin webhook configurado (PUBLIC_N8N_WEBHOOK_URL vacío): el lead sale por WhatsApp con el mensaje prellenado
-      if (!webhook) {
-        const msg = `Hola, soy ${body.name}. Quiero matricularme en ${body.program}${body.mode ? ` (clase ${body.mode.toLowerCase()})` : ''}, sede ${body.sede}. ¿Qué promociones tienen vigentes?${body.message ? ` ${body.message}` : ''}${body.email ? ` Mi correo: ${body.email}` : ''}`;
-        window.open(`${form.dataset.wa}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
-        location.assign(next);
-        return;
-      }
+      // El lead SIEMPRE va al CRM vía n8n y la persona aterriza en /gracias/ (ahí decide si escribe por WhatsApp).
+      // Si el envío falla, se muestra el error con el enlace a WhatsApp como respaldo.
+      if (!webhook) { err.hidden = false; return; }
 
       btn.disabled = true;
       btn.querySelector('span')!.textContent = btn.dataset.sending!;
