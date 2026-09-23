@@ -6,7 +6,7 @@
 export const SITE = {
   url: 'https://englishschool.growthdigital.marketing',
   // false = <meta robots noindex> en todas las páginas. Cambiar a true cuando el cliente apruebe.
-  indexable: false,
+  indexable: true,
 
   name: 'English School Medellín',
   brand: 'English School',
