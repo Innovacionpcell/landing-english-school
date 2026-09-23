@@ -1,69 +1,61 @@
-/* Fuentes self-hosted, subset latin (ES/EN) e instanciadas solo a los pesos usados (19–20 KB c/u).
-   font-display: optional → si la fuente no llega en ~100 ms el navegador usa el fallback
-   con métricas idénticas y NO cambia después = 0 CLS. Con el preload + caché, a partir
-   de la segunda visita siempre carga la webfont. */
+/* Fuentes self-hosted, subset latin e instanciadas solo a los pesos usados
+   (Source Serif 4: 600–700 · Public Sans: 400–700).
+   font-display: optional + fallbacks con métricas ajustadas = 0 CLS. */
 @font-face {
-  font-family: 'Montserrat Variable';
+  font-family: 'Source Serif 4 Variable';
   font-style: normal;
-  font-weight: 600 800;
+  font-weight: 600 700;
   font-display: optional;
-  src: url('../assets/fonts/montserrat-latin-subset.woff2') format('woff2-variations');
+  src: url('../assets/fonts/source-serif-4-latin-subset.woff2') format('woff2-variations');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: 'Roboto Variable';
+  font-family: 'Public Sans Variable';
   font-style: normal;
   font-weight: 400 700;
   font-display: optional;
-  src: url('../assets/fonts/roboto-latin-subset.woff2') format('woff2-variations');
+  src: url('../assets/fonts/public-sans-latin-subset.woff2') format('woff2-variations');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-/* Fallbacks con métricas ajustadas (capsize): el texto se dibuja con Arial/Roboto del sistema
-   ocupando EXACTAMENTE el mismo espacio que la webfont → 0 layout shift al cargar la fuente. */
+/* Fallbacks con métricas calculadas contra Times New Roman Bold / Arial (ancho medio de minúsculas) */
 @font-face {
-  font-family: 'Montserrat Fallback';
-  src: local('Arial'), local('ArialMT');
-  ascent-override: 85.7923%; descent-override: 22.2457%; line-gap-override: 0%; size-adjust: 112.8307%;
+  font-family: 'Source Serif Fallback';
+  src: local('Times New Roman Bold'), local('TimesNewRomanPS-BoldMT'), local('Times New Roman');
+  ascent-override: 90.6%; descent-override: 29.3%; line-gap-override: 0%; size-adjust: 114.3%;
 }
 @font-face {
-  font-family: 'Montserrat Fallback Android';
-  src: local('Roboto Regular'), local('Roboto-Regular'), local('Roboto');
-  ascent-override: 85.6043%; descent-override: 22.197%; line-gap-override: 0%; size-adjust: 113.0784%;
-}
-@font-face {
-  font-family: 'Roboto Fallback';
+  font-family: 'Public Sans Fallback';
   src: local('Arial'), local('ArialMT');
-  ascent-override: 92.9771%; descent-override: 24.4677%; line-gap-override: 0%; size-adjust: 99.7809%;
+  ascent-override: 88.3%; descent-override: 20.9%; line-gap-override: 0%; size-adjust: 107.6%;
 }
 
 :root {
-  --blue: #1a73e8;
-  --blue-brand: #0386fb;
-  --red: #ea4335;
-  --yellow: #fbbc05;
-  --green: #34a853;
-  --ink: #0f172a;
-  --ink-2: #334155;
-  --muted: #5b6475;
-  --line: #e6e9ef;
-  --bg: #ffffff;
-  --bg-soft: #f6f8fc;
+  /* Marca English School (colores del logo) */
+  --navy: #2f3185;
+  --navy-deep: #1c1e4a;
+  --red: #e22623;          /* solo decorativo: líneas, detalles, íconos grandes */
+  --cta: #b81f1c;          /* botones y CTAs (contraste AA con blanco) */
+  --cta-hover: #9a1a17;
+  --yellow: #ede549;       /* un solo acento, siempre sobre navy */
+  --ink: #1c1e4a;
+  --muted: #4a4d78;
+  --line: #dde0ee;
+  --bg: #f7f8fc;
   --card: #ffffff;
-  --radius: 20px;
+  --tint: #eceefa;
+  --radius: 18px;
   --radius-sm: 12px;
-  --shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 8px 24px rgb(15 23 42 / 0.06);
-  --shadow-lg: 0 24px 60px rgb(26 115 232 / 0.14);
+  --shadow: 0 1px 2px rgb(28 30 74 / .05), 0 8px 24px rgb(28 30 74 / .07);
+  --shadow-lg: 0 24px 60px rgb(47 49 133 / .16);
   --max: 1180px;
   --gutter: clamp(16px, 4vw, 32px);
-  --font-head: 'Montserrat Variable', 'Montserrat Fallback', 'Montserrat Fallback Android', Arial, system-ui, sans-serif;
-  --font-body: 'Roboto Variable', 'Roboto Fallback', Roboto, Arial, system-ui, sans-serif;
+  --font-head: 'Source Serif 4 Variable', 'Source Serif Fallback', Georgia, 'Times New Roman', serif;
+  --font-body: 'Public Sans Variable', 'Public Sans Fallback', Arial, system-ui, sans-serif;
   color-scheme: light;
 }
 
-*,
-*::before,
-*::after { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: border-box; }
 
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: 84px; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
@@ -73,71 +65,65 @@ body {
   font-family: var(--font-body);
   font-size: 1.0625rem;
   line-height: 1.65;
-  color: var(--ink-2);
+  color: var(--ink);
   background: var(--bg);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4 { font-family: var(--font-head); color: var(--ink); line-height: 1.12; letter-spacing: -0.02em; margin: 0 0 0.5em; text-wrap: balance; }
-h1 { font-size: clamp(2.3rem, 5.4vw, 4rem); font-weight: 800; }
-h2 { font-size: clamp(1.8rem, 3.6vw, 2.75rem); font-weight: 800; }
-h3 { font-size: 1.2rem; font-weight: 700; }
+h1, h2, h3, h4 { font-family: var(--font-head); color: var(--navy-deep); line-height: 1.12; letter-spacing: -0.01em; margin: 0 0 .5em; text-wrap: balance; font-weight: 700; }
+h1 { font-size: clamp(2.3rem, 5.2vw, 3.9rem); }
+h2 { font-size: clamp(1.8rem, 3.5vw, 2.7rem); }
+h3 { font-size: 1.22rem; font-weight: 600; }
 p { margin: 0 0 1em; text-wrap: pretty; }
-a { color: var(--blue); text-underline-offset: 3px; }
+a { color: var(--navy); text-underline-offset: 3px; }
 img { max-width: 100%; height: auto; display: block; }
 ul { padding-left: 1.2em; }
 
-:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; border-radius: 6px; }
+:focus-visible { outline: 3px solid var(--navy); outline-offset: 3px; border-radius: 6px; }
 
 .container { width: 100%; max-width: var(--max); margin-inline: auto; padding-inline: var(--gutter); }
-.section { padding-block: clamp(64px, 9vw, 120px); }
-.section--soft { background: var(--bg-soft); }
+.section { padding-block: clamp(64px, 9vw, 116px); }
+.section--white { background: #fff; }
+.section--navy { background: var(--navy); color: #e7e8f6; }
+.section--navy h2, .section--navy h3 { color: #fff; }
 .section__head { max-width: 760px; margin-bottom: clamp(32px, 5vw, 56px); }
 .section__head--center { margin-inline: auto; text-align: center; }
-.lead { font-size: clamp(1.05rem, 1.6vw, 1.2rem); color: var(--muted); }
+.lead { font-size: clamp(1.05rem, 1.6vw, 1.18rem); color: var(--muted); }
 
+/* Eyebrow con la franja roja del logo (decorativo) */
 .eyebrow {
   display: inline-flex; align-items: center; gap: 10px;
-  font-family: var(--font-head); font-weight: 700; font-size: 0.8rem;
-  letter-spacing: 0.12em; text-transform: uppercase; color: #1558b8; margin-bottom: 14px;
+  font-family: var(--font-body); font-weight: 700; font-size: .78rem;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--navy); margin-bottom: 14px;
 }
-.eyebrow::before { content: ''; width: 28px; height: 4px; border-radius: 4px;
-  background: linear-gradient(90deg, var(--blue) 0 25%, var(--red) 25% 50%, var(--yellow) 50% 75%, var(--green) 75%); }
+.eyebrow::before { content: ''; width: 28px; height: 3px; border-radius: 3px; background: var(--red); }
+.section--navy .eyebrow { color: #fff; }
 
 .btn {
-  --btn-bg: var(--blue); --btn-fg: #fff;
+  --btn-bg: var(--cta); --btn-fg: #fff;
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
   min-height: 52px; padding: 0 26px; border-radius: 999px; border: 2px solid transparent;
   background: var(--btn-bg); color: var(--btn-fg);
-  font-family: var(--font-head); font-weight: 700; font-size: 1rem; text-decoration: none; cursor: pointer;
+  font-family: var(--font-body); font-weight: 700; font-size: 1rem; text-decoration: none; cursor: pointer;
   transition: transform .15s ease, box-shadow .2s ease, background-color .2s ease;
 }
-.btn:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgb(26 115 232 / 0.28); }
-.btn--ghost { --btn-bg: transparent; --btn-fg: var(--ink); border-color: var(--line); }
-.btn--ghost:hover { border-color: var(--ink); box-shadow: none; }
-.btn--wa { --btn-bg: #fff; --btn-fg: var(--ink); border-color: var(--line); }
-.btn--wa svg { color: #25d366; }
-.btn--sm { min-height: 42px; padding: 0 18px; font-size: 0.92rem; }
+.btn:hover { --btn-bg: var(--cta-hover); transform: translateY(-1px); box-shadow: 0 10px 24px rgb(184 31 28 / .28); }
+.btn--ghost { --btn-bg: transparent; --btn-fg: var(--navy); border-color: var(--line); }
+.btn--ghost:hover { --btn-bg: #fff; border-color: var(--navy); box-shadow: none; }
+.btn--wa { --btn-bg: #fff; --btn-fg: var(--navy-deep); border-color: var(--line); }
+.btn--wa:hover { --btn-bg: #fff; border-color: #25d366; box-shadow: none; }
+.btn--wa svg { color: #1faa53; }
+.btn--sm { min-height: 42px; padding: 0 18px; font-size: .92rem; }
 .btn svg { width: 20px; height: 20px; flex: none; }
 
 .grid { display: grid; gap: clamp(16px, 2.4vw, 24px); }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(22px, 3vw, 32px); }
 
-.dot--blue { --c: var(--blue); } .dot--red { --c: var(--red); } .dot--yellow { --c: #e3a600; } .dot--green { --c: var(--green); }
-
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-.skip { position: absolute; left: 12px; top: -60px; z-index: 100; background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 8px; }
+.skip { position: absolute; left: 12px; top: -60px; z-index: 100; background: var(--navy-deep); color: #fff; padding: 10px 16px; border-radius: 8px; }
 .skip:focus { top: 12px; }
 
-.stars { display: inline-flex; gap: 2px; color: var(--yellow); }
-.stars svg { width: 18px; height: 18px; }
-
-/* Prosa del blog */
-.prose { max-width: 720px; margin-inline: auto; font-size: 1.1rem; }
-.prose h2 { font-size: 1.6rem; margin-top: 2em; }
-.prose h3 { margin-top: 1.6em; }
+.prose { max-width: 720px; margin-inline: auto; font-size: 1.08rem; }
+.prose h2 { font-size: 1.55rem; margin-top: 2em; }
 .prose li { margin-bottom: .4em; }
-.prose code { background: var(--bg-soft); padding: 2px 6px; border-radius: 6px; font-size: .92em; }
-.prose hr { border: 0; border-top: 1px solid var(--line); margin: 2.5em 0; }
-.prose img { border-radius: var(--radius-sm); }

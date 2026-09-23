@@ -1,60 +1,32 @@
 ---
 import Base from '../layouts/Base.astro';
 import Icon from './Icon.astro';
-import { SITE } from '../config/site';
-import { t, localePath, type Lang } from '../i18n/copy';
-import { PUBLIC_BOOKING_URL } from 'astro:env/client';
-const { lang } = Astro.props as { lang: Lang };
-const c = t(lang).thanks;
-// Acepta el enlace de la página de reservas o la URL de "schedules" y la convierte a modo embebido
-const embed = PUBLIC_BOOKING_URL ? (PUBLIC_BOOKING_URL.includes('/schedules/') ? `${PUBLIC_BOOKING_URL}${PUBLIC_BOOKING_URL.includes('?') ? '&' : '?'}gv=true` : PUBLIC_BOOKING_URL) : null;
+import { whatsappUrl } from '../config/site';
+import { copy } from '../config/copy';
+const c = copy.thanks;
 ---
-<Base lang={lang} title={c.metaTitle} description={c.lead} noindex>
+<Base title={c.metaTitle} description={c.lead} noindex>
   <section class="section th">
-    <div class="container">
-      <div class="th__head" data-state="agenda">
-        <span class="th__ok"><Icon name="check" /></span>
-        <h1>{c.title}</h1>
-        <p class="lead">{c.lead}</p>
-      </div>
-      <div class="th__head" data-state="general" hidden>
-        <span class="th__ok"><Icon name="check" /></span>
-        <h1>{c.generalTitle}</h1>
-        <p class="lead">{c.generalLead}</p>
-        <a class="btn btn--wa" href={SITE.whatsapp} target="_blank" rel="noopener"><Icon name="whatsapp" />{t(lang).wa}</a>
-      </div>
-
-      <div class="th__cal" data-state="agenda">
-        {embed ? (
-          <>
-            <iframe src={embed} title={c.title} loading="eager" width="100%" height="720"></iframe>
-            <p class="th__fb"><a href={PUBLIC_BOOKING_URL} target="_blank" rel="noopener"><Icon name="calendar" />{c.fallback}</a></p>
-          </>
-        ) : (
-          <p class="th__fb"><a class="btn" href={SITE.whatsapp} target="_blank" rel="noopener"><Icon name="whatsapp" />{t(lang).wa}</a></p>
-        )}
-      </div>
-      <p class="th__back"><a href={localePath(lang, '/')}>← {c.back}</a></p>
+    <div class="container th__in">
+      <span class="th__ok"><Icon name="check" /></span>
+      <h1>{c.title}</h1>
+      <p class="lead">{c.lead}</p>
+      <p class="th__ctas">
+        <a class="btn" href={whatsappUrl('Hola, acabo de enviar el formulario para la prueba de nivel')} target="_blank" rel="noopener" data-cta="thanks-wa"><Icon name="whatsapp" />{copy.wa}</a>
+        <a class="btn btn--ghost" href="/">← {c.back}</a>
+      </p>
     </div>
   </section>
   <script>
-    // Evento de conversión para Google Ads / GA4 (vía GTM) al llegar a la página de gracias
-    const s = new URLSearchParams(location.search).get('s') === 'general' ? 'general' : 'agenda';
-    document.querySelectorAll<HTMLElement>('[data-state]').forEach((el) => (el.hidden = el.dataset.state !== s));
+    // Evento de conversión para Google Ads / GA4 (vía GTM)
     (window as any).dataLayer = (window as any).dataLayer || [];
-    (window as any).dataLayer.push({ event: 'lead_thank_you', lead_type: s });
+    (window as any).dataLayer.push({ event: 'lead_thank_you' });
   </script>
 </Base>
 <style>
-  .th { padding-top: clamp(40px, 6vw, 72px); }
-  .th__head { text-align: center; max-width: 720px; margin: 0 auto 32px; }
-  .th__head h1 { font-size: clamp(2rem, 4.4vw, 3rem); }
-  .th__ok { display: inline-grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: #e6f4ea; color: var(--green); margin-bottom: 18px; }
+  .th__in { text-align: center; max-width: 720px; }
+  .th__in h1 { font-size: clamp(2rem, 4.4vw, 3rem); }
+  .th__ok { display: inline-grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--tint); color: var(--navy); margin-bottom: 18px; }
   .th__ok :global(svg) { width: 34px; height: 34px; }
-  .th__cal { max-width: 980px; margin: 0 auto; background: #fff; border-radius: var(--radius); box-shadow: var(--shadow-lg); overflow: hidden; }
-  .th__cal iframe { display: block; border: 0; width: 100%; min-height: 720px; }
-  .th__fb { text-align: center; padding: 16px; margin: 0; }
-  .th__fb a { display: inline-flex; gap: 8px; align-items: center; font-weight: 600; }
-  .th__fb :global(svg) { width: 20px; height: 20px; }
-  .th__back { text-align: center; margin-top: 28px; }
+  .th__ctas { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 12px; }
 </style>

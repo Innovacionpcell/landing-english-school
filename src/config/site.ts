@@ -1,57 +1,69 @@
-// Fuente única de verdad: NAP, redes y datos del negocio.
-// Todo el schema, el footer y los botones leen de aquí.
+// Fuente única de verdad: NAP, programas, WhatsApp y cobertura.
+// Schema JSON-LD, header, footer, formulario y botón flotante leen de aquí.
+// ⚠ Los campos marcados con TODO son placeholders: confirmar con el cliente antes de publicar.
 
 export const SITE = {
-  url: 'https://growthdigital.marketing',
-  name: 'Growth Digital',
-  legalName: 'Growth Digital – Agencia de Marketing Digital',
-  gbpName: 'Agencia Marketing digital en Medellín | Growth Digital',
-  founder: {
-    name: 'Carlos Andrés Vergara Márquez',
-    shortName: 'Andrés Vergara',
-    jobTitle: 'Fundador y Consultor SEO',
-    linkedin: 'https://www.linkedin.com/in/carlos-andres-vergara/',
-    // Certificado profesional verificable (Coursera)
-    certificate: {
-      name: 'Certificado Profesional en Marketing Digital',
-      nameEn: 'Professional Certificate in Digital Marketing',
-      issuer: 'Coursera',
-      url: 'https://www.coursera.org/account/accomplishments/professional-cert/7CHA8QB7ZY7C',
-    },
-  },
-  // Portal de clientes (dashboard propio)
-  portalUrl: 'https://portal.growthdigital.marketing/',
-  // Blog generado por Soro IA (embed). Solo se carga en /blog/ para no afectar el rendimiento del home.
-  soroEmbed: 'https://app.trysoro.com/api/embed/5e3ab6a0-2258-43e7-9d9b-68f697e78515',
-  email: 'info@growthdigital.marketing',
-  phone: '+573207328366',
-  phoneDisplay: '320 732 8366',
-  whatsapp: 'https://wa.me/573207328366?text=Hola%20Andr%C3%A9s%2C%20quiero%20un%20diagn%C3%B3stico%20para%20mi%20negocio',
+  url: 'https://englishschool.growthdigital.marketing',
+  // false = <meta robots noindex> en todas las páginas. Cambiar a true cuando el cliente apruebe.
+  indexable: false,
+
+  // Nombre visible de la marca
+  name: 'English School Medellín',
+  // Nombre EXACTO del Perfil de Negocio de Google (NAP: debe coincidir con la ficha)
+  gbpName: 'English School - Sede Medellín',
+  legalName: 'English School Medellín', // TODO: razón social + NIT para la política de datos
+  nit: '', // TODO
+  // Categoría de la ficha: "Centro educativo"
+  email: '', // TODO: correo de contacto (se oculta mientras esté vacío)
+  phone: '+573016054350',
+  phoneDisplay: '301 605 4350',
+  // Número de WhatsApp en formato internacional sin "+" (botón flotante, CTAs y respaldo del formulario)
+  whatsappNumber: '573016054350', // TODO: confirmar que este número tiene WhatsApp
+  whatsappText: 'Hola, quiero información sobre los cursos de inglés',
   address: {
-    street: 'Cra. 56A #61-24, Urbanización Turín',
-    neighborhood: 'La Candelaria',
-    city: 'Medellín',
+    street: 'Cl. 27B #58', // Tal cual la ficha de Google
+    neighborhood: 'La Gran Avenida',
+    city: 'Bello',
     region: 'Antioquia',
-    postalCode: '050012',
+    postalCode: '', // TODO
     country: 'CO',
   },
-  // Coordenadas del pin de la ficha de Google
-  geo: { lat: 6.2608031, lng: -75.5711375 },
-  // Ficha de Google (CID estable) y enlace directo para dejar reseña
-  mapsUrl: 'https://maps.google.com/?cid=13805772976608676732',
-  mapsKgId: '/g/11m9zwzbqd',
-  reviewUrl: 'https://g.page/r/CXyLckhg9Ze_EAE/review',
-  // TODO: confirma el horario exacto de tu ficha
-  openingHours: [{ days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], opens: '09:00', closes: '18:00' }],
-  areaServed: ['Medellín', 'Antioquia', 'Colombia', 'Estados Unidos', 'España', 'Suiza', 'Latinoamérica'],
-  instagramHandle: 'growthdigital24',
+  // Coordenadas del pin de la ficha. TODO: copiar lat/lng exactas desde Google Maps (se omiten del schema si son null)
+  geo: null as { lat: number; lng: number } | null,
+  // TODO: enlace de la ficha (Maps > Compartir) → https://maps.app.goo.gl/... o https://maps.google.com/?cid=...
+  mapsUrl: 'https://www.google.com/maps/search/?api=1&query=ENGLISH+SCHOOL+-+Sede+Medellin+Bello',
+  // TODO: días exactos. La ficha muestra cierre a las 5 p. m.
+  openingHours: [{ days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], opens: '08:00', closes: '17:00' }],
+  hoursDisplay: 'Lunes a viernes, 8:00 a. m. – 5:00 p. m.', // TODO
+  logo: '/logo-english-school.png', // TODO: reemplazar el placeholder por el logo real (PNG cuadrado ≥ 512 px)
+
+  // Cobertura (SEO local). La sede física está en Bello; el resto se atiende presencial por cercanía y/o virtual.
+  areaServed: {
+    main: 'Medellín',
+    valleDeAburra: ['Medellín', 'Bello', 'Itagüí', 'Envigado', 'Sabaneta', 'La Estrella', 'Caldas', 'Copacabana', 'Girardota', 'Barbosa'],
+    oriente: ['Rionegro', 'Marinilla', 'El Carmen de Viboral', 'La Ceja', 'El Retiro', 'Guarne', 'El Santuario', 'La Unión'],
+  },
+
+  // Programas → sección "Programas", opciones del formulario y un schema Course por cada uno.
+  // TODO: confirmar nombres, edades, duración y modalidad con el cliente.
+  programs: [
+    { id: 'ninos', name: 'Inglés para niños', audience: 'Niños de 6 a 12 años', level: 'A1–A2', modes: ['onsite'], icon: 'kids', description: 'Clases dinámicas con juego, canciones y proyectos para que los niños pierdan el miedo y hablen inglés desde la primera clase.' },
+    { id: 'adolescentes', name: 'Inglés para adolescentes', audience: 'Jóvenes de 13 a 17 años', level: 'A1–B2', modes: ['onsite', 'online'], icon: 'teen', description: 'Refuerzo para el colegio y preparación para la vida universitaria, con conversación real y seguimiento de avance.' },
+    { id: 'adultos', name: 'Inglés para adultos', audience: 'Adultos desde cero o con bases', level: 'A1–C1', modes: ['onsite', 'online'], icon: 'adult', description: 'Horarios flexibles para quienes trabajan o estudian. Enfoque conversacional para usar el inglés en viajes, trabajo y estudios.' },
+    { id: 'empresas', name: 'Inglés para empresas', audience: 'Equipos y profesionales', level: 'A2–C1', modes: ['onsite', 'online'], icon: 'work', description: 'Planes a la medida para equipos: inglés de negocios, reuniones, correos y atención a clientes internacionales.' },
+    { id: 'examenes', name: 'Preparación de exámenes internacionales', audience: 'Estudiantes y profesionales', level: 'B1–C1', modes: ['onsite', 'online'], icon: 'exam', description: 'Entrenamiento por habilidades y simulacros para exámenes de certificación, becas, visas y admisiones.' },
+  ],
+
+  // Redes. TODO: agregar URLs reales (se usan en footer y en schema sameAs). Vacío = no se muestra.
   social: [
-    { id: 'instagram', label: 'Instagram', url: 'https://www.instagram.com/growthdigital24/' },
-    { id: 'facebook', label: 'Facebook', url: 'https://www.facebook.com/growthdigitalmarketingseo/' },
-    { id: 'linkedin', label: 'LinkedIn', url: 'https://www.linkedin.com/in/carlos-andres-vergara/' },
-    { id: 'tiktok', label: 'TikTok', url: 'https://www.tiktok.com/@growthdigitalmarketing' },
-    { id: 'whatsapp', label: 'WhatsApp', url: 'https://wa.me/573207328366' },
+    { id: 'instagram', label: 'Instagram', url: '' },
+    { id: 'facebook', label: 'Facebook', url: '' },
+    { id: 'tiktok', label: 'TikTok', url: '' },
   ],
 } as const;
 
-export type SocialId = (typeof SITE.social)[number]['id'];
+export const whatsappUrl = (text: string = SITE.whatsappText) =>
+  `https://wa.me/${SITE.whatsappNumber}?text=${encodeURIComponent(text)}`;
+
+export const socialLinks = SITE.social.filter((s) => s.url);
+export type Program = (typeof SITE.programs)[number];

@@ -1,5 +1,5 @@
 {
-  "name": "growth-landing-web",
+  "name": "landing-english-school",
   "type": "module",
   "version": "1.0.0",
   "private": true,
@@ -8,18 +8,19 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "fetch:data": "node scripts/fetch-google-reviews.mjs && node scripts/fetch-instagram.mjs",
-    "build": "npm run fetch:data && astro build",
-    "build:offline": "astro build",
+    "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
     "lighthouse": "npx --yes lighthouse http://localhost:4321/ --preset=desktop --only-categories=performance,accessibility,best-practices,seo --quiet --chrome-flags=\"--headless --no-sandbox\" --output=html --output-path=./lighthouse.html"
   },
   "dependencies": {
-    "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.4",
     "astro": "^7.3.3",
     "sharp": "^0.35.4"
   },
-  "description": "Landing estática de Growth Digital (Astro) – SEO local Medellín + internacional, formulario a n8n, deploy en Hostinger"
+  "description": "Landing estática de English School Medellín (Astro) – SEO local Medellín, Valle de Aburrá y Oriente Antioqueño, formulario a n8n, deploy en Hostinger",
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "typescript": "^6.0.3"
+  }
 }

@@ -1,31 +1,28 @@
 ---
 import '../styles/global.css';
-import montserrat from '../assets/fonts/montserrat-latin-subset.woff2?url';
+import serif from '../assets/fonts/source-serif-4-latin-subset.woff2?url';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import WhatsAppFab from '../components/WhatsAppFab.astro';
 import { SITE } from '../config/site';
-import { t, type Lang } from '../i18n/copy';
+import { copy as c } from '../config/copy';
 import { PUBLIC_GTM_ID } from 'astro:env/client';
 
 interface Props {
   title: string;
   description: string;
-  lang?: Lang;
   image?: string;
-  type?: 'website' | 'article';
   schema?: object;
-  alternates?: { es?: string; en?: string };
   noindex?: boolean;
   /** Texto al compartir (og:description). Si no se pasa, usa description. */
   ogDescription?: string;
-  preloadImage?: { src: string; srcset?: string; sizes?: string };
 }
-const { title, description, lang = 'es', image = '/og-growth-digital-v3.jpg', type = 'website', schema, alternates, noindex = false, preloadImage, ogDescription } = Astro.props;
+const { title, description, image = '/og-english-school.jpg', schema, noindex = false, ogDescription } = Astro.props;
 const shareDescription = ogDescription ?? description;
-const c = t(lang);
 const canonical = new URL(Astro.url.pathname, SITE.url).href;
 const ogImage = new URL(image, SITE.url).href;
+// noindex global mientras el cliente no apruebe (SITE.indexable = false)
+const blockIndex = noindex || !SITE.indexable;
 ---
 <!doctype html>
 <html lang={c.htmlLang}>
@@ -35,30 +32,25 @@ const ogImage = new URL(image, SITE.url).href;
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    {noindex ? <meta name="robots" content="noindex, follow" /> : <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />}
-    {alternates?.es && <link rel="alternate" hreflang="es" href={new URL(alternates.es, SITE.url).href} />}
-    {alternates?.en && <link rel="alternate" hreflang="en" href={new URL(alternates.en, SITE.url).href} />}
-    {alternates?.es && <link rel="alternate" hreflang="x-default" href={new URL(alternates.es, SITE.url).href} />}
+    {blockIndex ? <meta name="robots" content="noindex, nofollow" /> : <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />}
 
-    <!-- Solo se precarga Montserrat (el H1 es el LCP). Roboto es 'optional': entra en 2.ª visita desde caché sin bloquear nada. -->
-    <link rel="preload" href={montserrat} as="font" type="font/woff2" crossorigin />
-    {preloadImage && <link rel="preload" as="image" href={preloadImage.src} imagesrcset={preloadImage.srcset} imagesizes={preloadImage.sizes} fetchpriority="high" />}
+    <!-- Solo se precarga la serif de títulos (el H1 es el LCP) -->
+    <link rel="preload" href={serif} as="font" type="font/woff2" crossorigin />
 
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#2f3185" />
 
-    <meta property="og:type" content={type} />
+    <meta property="og:type" content="website" />
     <meta property="og:site_name" content={SITE.name} />
     <meta property="og:locale" content={c.ogLocale} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={shareDescription} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogImage} />
-    <meta property="og:image:secure_url" content={ogImage} />
-    <meta property="og:image:type" content={ogImage.endsWith(".png") ? "image/png" : "image/jpeg"} />
+    <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:alt" content={title} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -68,10 +60,9 @@ const ogImage = new URL(image, SITE.url).href;
     <meta name="twitter:image" content={ogImage} />
 
     <meta name="geo.region" content="CO-ANT" />
-    <meta name="geo.placename" content="Medellín" />
-    <meta name="geo.position" content={`${SITE.geo.lat};${SITE.geo.lng}`} />
-    <meta name="ICBM" content={`${SITE.geo.lat}, ${SITE.geo.lng}`} />
-    <link rel="alternate" type="application/rss+xml" title="Growth Digital Blog" href="/rss.xml" />
+    <meta name="geo.placename" content={`${SITE.address.city}, Antioquia`} />
+    {SITE.geo && <meta name="geo.position" content={`${SITE.geo.lat};${SITE.geo.lng}`} />}
+    {SITE.geo && <meta name="ICBM" content={`${SITE.geo.lat}, ${SITE.geo.lng}`} />}
     <link rel="sitemap" href="/sitemap-index.xml" />
     <slot name="head" />
 
@@ -97,12 +88,12 @@ const ogImage = new URL(image, SITE.url).href;
     )}
   </head>
   <body>
-    <a class="skip" href="#main">{lang === 'es' ? 'Saltar al contenido' : 'Skip to content'}</a>
-    <Header lang={lang} alternates={alternates} />
+    <a class="skip" href="#main">Saltar al contenido</a>
+    <Header />
     <main id="main">
       <slot />
     </main>
-    <Footer lang={lang} />
-    <WhatsAppFab lang={lang} />
+    <Footer />
+    <WhatsAppFab />
   </body>
 </html>

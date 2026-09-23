@@ -1,0 +1,49 @@
+---
+import Icon from '../Icon.astro';
+import { SITE } from '../../config/site';
+import { copy } from '../../config/copy';
+const c = copy.coverage;
+const valle = SITE.areaServed.valleDeAburra;
+const oriente = SITE.areaServed.oriente;
+---
+<section class="section section--white" id="sede">
+  <div class="container">
+    <div class="section__head">
+      <p class="eyebrow">{c.eyebrow}</p>
+      <h2>{c.title}</h2>
+      <p class="lead">{c.lead}</p>
+    </div>
+    <div class="cov">
+      <div class="card cov__sede">
+        <h3>{c.sedeTitle}</h3>
+        <p><Icon name="pin" /><span>{SITE.address.street}, {SITE.address.neighborhood}<br />{SITE.address.city}, {SITE.address.region}</span></p>
+        <p><Icon name="clock" /><span>{SITE.hoursDisplay}</span></p>
+        <p><Icon name="phone" /><a href={`tel:${SITE.phone}`}>{SITE.phoneDisplay}</a></p>
+        <a class="btn btn--ghost btn--sm" href={SITE.mapsUrl} target="_blank" rel="noopener">{c.mapCta}</a>
+      </div>
+      <div class="card">
+        <h3>{c.valleTitle}</h3>
+        <p class="cov__note">{c.valleNote}</p>
+        <ul class="cov__list">{valle.map((m) => <li>{m}</li>)}</ul>
+      </div>
+      <div class="card">
+        <h3>{c.orienteTitle}</h3>
+        <p class="cov__note">{c.orienteNote}</p>
+        <ul class="cov__list">{oriente.map((m) => <li>{m}</li>)}</ul>
+      </div>
+    </div>
+  </div>
+</section>
+<style>
+  .cov { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 20px; align-items: start; }
+  .cov__sede { background: var(--bg); border-top: 4px solid var(--red); }
+  .cov__sede p { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 12px; }
+  .cov__sede :global(svg) { width: 20px; height: 20px; flex: none; color: var(--navy); margin-top: 3px; }
+  .cov__sede .btn { margin-top: 8px; }
+  .cov__note { color: var(--muted); font-size: .95rem; }
+  .cov__list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; font-size: .95rem; }
+  .cov__list li { padding-left: 16px; position: relative; }
+  .cov__list li::before { content: ''; position: absolute; left: 0; top: .7em; width: 6px; height: 6px; border-radius: 50%; background: var(--navy); }
+  @media (max-width: 960px) { .cov { grid-template-columns: 1fr 1fr; } .cov__sede { grid-column: 1 / -1; } }
+  @media (max-width: 620px) { .cov { grid-template-columns: 1fr; } }
+</style>

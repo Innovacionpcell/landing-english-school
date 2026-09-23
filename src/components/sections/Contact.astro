@@ -1,16 +1,14 @@
 ---
 import Icon from '../Icon.astro';
-import { SITE } from '../../config/site';
-import { t, localePath, type Lang } from '../../i18n/copy';
+import { SITE, whatsappUrl } from '../../config/site';
+import { copy } from '../../config/copy';
 import { PUBLIC_N8N_WEBHOOK_URL } from 'astro:env/client';
-const { lang } = Astro.props as { lang: Lang };
-const c = t(lang).contact;
+const c = copy.contact;
 const f = c.fields;
 const webhook = PUBLIC_N8N_WEBHOOK_URL ?? '';
-const thanksAgenda = localePath(lang, lang === 'en' ? '/thanks/' : '/gracias/') + '?s=agenda';
-const thanksGeneral = localePath(lang, lang === 'en' ? '/thanks/' : '/gracias/') + '?s=general';
+const programs = [...SITE.programs.map((p) => p.name), c.generalOption];
 ---
-<section class="section section--soft" id="agenda">
+<section class="section section--white" id="prueba">
   <div class="container ct">
     <div class="ct__side">
       <p class="eyebrow">{c.eyebrow}</p>
@@ -22,15 +20,14 @@ const thanksGeneral = localePath(lang, lang === 'en' ? '/thanks/' : '/gracias/')
       <div class="ct__nap card">
         <p class="ct__h">{c.napTitle}</p>
         <p><Icon name="pin" />{SITE.address.street}, {SITE.address.neighborhood}, {SITE.address.city}</p>
-        <p><Icon name="clock" />{c.hours}</p>
+        <p><Icon name="clock" />{SITE.hoursDisplay}</p>
         <p><Icon name="phone" /><a href={`tel:${SITE.phone}`}>{SITE.phoneDisplay}</a></p>
-        <p><Icon name="mail" /><a href={`mailto:${SITE.email}`}>{SITE.email}</a></p>
-        <a class="ct__map" href={SITE.mapsUrl} target="_blank" rel="noopener">{c.mapCta} →</a>
+        {SITE.email && <p><Icon name="mail" /><a href={`mailto:${SITE.email}`}>{SITE.email}</a></p>}
       </div>
     </div>
 
-    <form class="form card" id="lead-form" method="post" action={webhook || '#agenda'} data-webhook={webhook} data-next-agenda={thanksAgenda} data-next-general={thanksGeneral} data-wa={SITE.whatsapp.split('?')[0]} novalidate>
-      <input type="hidden" name="lang" value={lang} />
+    <form class="form card" id="lead-form" method="post" action={webhook || '#prueba'} data-webhook={webhook} data-wa={`https://wa.me/${SITE.whatsappNumber}`} novalidate>
+      <input type="hidden" name="source" value="landing-english-school" />
       <input type="hidden" name="page" value="" />
       <input type="hidden" name="ts" value="" />
       <input type="hidden" name="utm" value="" />
@@ -44,31 +41,39 @@ const thanksGeneral = localePath(lang, lang === 'en' ? '/thanks/' : '/gracias/')
       </div>
       <div class="row">
         <div class="field">
+          <label for="lf-phone">{f.phone} *</label>
+          <input id="lf-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" required minlength="7" maxlength="20" placeholder="300 000 0000" />
+        </div>
+        <div class="field">
           <label for="lf-email">{f.email} *</label>
           <input id="lf-email" name="email" type="email" autocomplete="email" inputmode="email" required maxlength="120" />
         </div>
-        <div class="field">
-          <label for="lf-phone">{f.phone} *</label>
-          <input id="lf-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" required minlength="7" maxlength="20" placeholder={lang === 'es' ? '+57 300 000 0000' : '+1 305 000 0000'} />
-        </div>
       </div>
-      <div class="row">
-        <div class="field">
-          <label for="lf-company">{f.company}</label>
-          <input id="lf-company" name="company" type="text" autocomplete="organization" maxlength="120" />
-        </div>
-        <div class="field">
-          <label for="lf-location">{f.location} *</label>
-          <input id="lf-location" name="location" type="text" autocomplete="address-level2" required minlength="2" maxlength="80" placeholder={f.locationPh} />
-        </div>
+      <div class="field">
+        <label for="lf-location">{f.location} *</label>
+        <input id="lf-location" name="location" type="text" autocomplete="address-level2" list="lf-municipios" required minlength="2" maxlength="80" placeholder={f.locationPh} />
+        <datalist id="lf-municipios">
+          {[...SITE.areaServed.valleDeAburra, ...SITE.areaServed.oriente].map((m) => <option value={m} />)}
+        </datalist>
       </div>
       <fieldset class="field">
-        <legend>{f.service} *</legend>
+        <legend>{f.program} *</legend>
         <div class="chips">
-          {c.services.map((s, i) => (
+          {programs.map((p, i) => (
             <label class="chip-opt">
-              <input type="radio" name="service" value={s.v} required={i === 0} />
-              <span>{s.l}</span>
+              <input type="radio" name="program" value={p} required={i === 0} />
+              <span>{p}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset class="field">
+        <legend>{f.mode}</legend>
+        <div class="chips">
+          {c.modes.map((m) => (
+            <label class="chip-opt">
+              <input type="radio" name="mode" value={m} />
+              <span>{m}</span>
             </label>
           ))}
         </div>
@@ -85,7 +90,7 @@ const thanksGeneral = localePath(lang, lang === 'en' ? '/thanks/' : '/gracias/')
         <Icon name="calendar" /><span>{c.submit}</span>
       </button>
       <p class="form__err" role="alert" hidden>{c.error}</p>
-      <p class="form__or">{c.or} <a href={SITE.whatsapp} target="_blank" rel="noopener"><Icon name="whatsapp" />WhatsApp</a></p>
+      <p class="form__or">{c.or} <a href={whatsappUrl()} target="_blank" rel="noopener"><Icon name="whatsapp" />WhatsApp</a></p>
     </form>
   </div>
 </section>
@@ -96,31 +101,31 @@ const thanksGeneral = localePath(lang, lang === 'en' ? '/thanks/' : '/gracias/')
     const set = (n: string, v: string) => { const el = form.elements.namedItem(n) as HTMLInputElement | null; if (el) el.value = v; };
     set('ts', String(Date.now()));
     set('page', location.pathname);
-    // Atribución: guarda UTMs / gclid / fbclid de la primera visita de la sesión
+    // Atribución: UTMs / gclid / fbclid de la primera visita de la sesión
     try {
       const qs = new URLSearchParams(location.search);
       const keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'gbraid', 'wbraid', 'fbclid'];
       const found: Record<string, string> = {};
       keys.forEach((k) => { const v = qs.get(k); if (v) found[k] = v; });
-      if (Object.keys(found).length) sessionStorage.setItem('gd_attr', JSON.stringify({ ...found, landing: location.href, referrer: document.referrer }));
-      else if (!sessionStorage.getItem('gd_attr')) sessionStorage.setItem('gd_attr', JSON.stringify({ referrer: document.referrer, landing: location.href }));
-      set('utm', sessionStorage.getItem('gd_attr') ?? '');
+      if (Object.keys(found).length) sessionStorage.setItem('es_attr', JSON.stringify({ ...found, landing: location.href, referrer: document.referrer }));
+      else if (!sessionStorage.getItem('es_attr')) sessionStorage.setItem('es_attr', JSON.stringify({ referrer: document.referrer, landing: location.href }));
+      set('utm', sessionStorage.getItem('es_attr') ?? '');
     } catch {}
 
     const btn = form.querySelector<HTMLButtonElement>('.form__submit')!;
     const err = form.querySelector<HTMLElement>('.form__err')!;
     const webhook = form.dataset.webhook || '';
+    const next = '/gracias/';
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       err.hidden = true;
       if (!form.checkValidity()) { form.reportValidity(); return; }
       const body = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
-      const general = body.service === 'Pregunta general';
-      const next = general ? form.dataset.nextGeneral! : form.dataset.nextAgenda!;
+      if (body.website_url) return; // honeypot
 
       // Sin webhook configurado (PUBLIC_N8N_WEBHOOK_URL vacío): el lead sale por WhatsApp con el mensaje prellenado
       if (!webhook) {
-        const msg = `Hola Andrés, soy ${body.name}${body.company ? ` de ${body.company}` : ''}${body.location ? ` (${body.location})` : ''}. Me interesa: ${body.service}.${body.message ? ` ${body.message}` : ''} Mi correo: ${body.email}`;
+        const msg = `Hola, soy ${body.name} (${body.location}). Quiero la prueba de nivel para: ${body.program}${body.mode ? `, modalidad ${body.mode.toLowerCase()}` : ''}.${body.message ? ` ${body.message}` : ''} Mi correo: ${body.email}`;
         window.open(`${form.dataset.wa}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
         location.assign(next);
         return;
@@ -136,8 +141,8 @@ const thanksGeneral = localePath(lang, lang === 'en' ? '/thanks/' : '/gracias/')
         });
         const json = await res.json().catch(() => ({}));
         if (!res.ok || json.ok === false) throw new Error(json.error || 'error');
-        (window as any).dataLayer?.push({ event: 'generate_lead', lead_service: body.service, lead_id: json.id ?? null });
-        location.assign(json.next || next);
+        (window as any).dataLayer?.push({ event: 'generate_lead', lead_program: body.program, lead_id: json.id ?? null });
+        location.assign(next);
       } catch {
         err.hidden = false;
         btn.disabled = false;
@@ -151,37 +156,36 @@ const thanksGeneral = localePath(lang, lang === 'en' ? '/thanks/' : '/gracias/')
   .ct { display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(32px, 5vw, 64px); align-items: start; }
   .ct__steps { list-style: none; padding: 0; margin: 8px 0 28px; display: grid; gap: 12px; }
   .ct__steps li { display: flex; align-items: center; gap: 12px; font-weight: 500; color: var(--ink); }
-  .ct__steps span { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--blue); color: #fff; font-family: var(--font-head); font-weight: 700; font-size: .9rem; flex: none; }
-  .ct__nap { padding: 22px 24px; }
+  .ct__steps span { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--navy); color: #fff; font-weight: 700; font-size: .9rem; flex: none; }
+  .ct__nap { padding: 22px 24px; background: var(--bg); }
   .ct__nap p { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 10px; font-size: .96rem; }
-  .ct__nap :global(svg) { width: 20px; height: 20px; flex: none; color: var(--blue); margin-top: 2px; }
-  .ct__h { font-family: var(--font-head); font-weight: 700; color: var(--ink); }
-  .ct__map { font-family: var(--font-head); font-weight: 700; text-decoration: none; }
+  .ct__nap :global(svg) { width: 20px; height: 20px; flex: none; color: var(--navy); margin-top: 2px; }
+  .ct__h { font-family: var(--font-head); font-weight: 700; font-size: 1.1rem; color: var(--navy-deep); }
 
-  .form { display: grid; gap: 18px; box-shadow: var(--shadow-lg); border: 0; }
+  .form { display: grid; gap: 18px; box-shadow: var(--shadow-lg); border: 0; border-top: 4px solid var(--navy); }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .field { display: grid; gap: 6px; border: 0; padding: 0; margin: 0; min-width: 0; }
-  .field label, legend { font-weight: 500; color: var(--ink); font-size: .95rem; padding: 0; margin-bottom: 6px; }
+  .field label, legend { font-weight: 600; color: var(--ink); font-size: .95rem; padding: 0; margin-bottom: 6px; }
   input[type='text'], input[type='email'], input[type='tel'], textarea {
     width: 100%; font: inherit; font-size: 1rem; color: var(--ink); background: #fff;
-    border: 1.5px solid #d5dbe5; border-radius: 12px; padding: 13px 14px; min-height: 50px; transition: border-color .15s, box-shadow .15s;
+    border: 1.5px solid #cfd2e6; border-radius: 12px; padding: 13px 14px; min-height: 50px; transition: border-color .15s, box-shadow .15s;
   }
   textarea { resize: vertical; min-height: 90px; }
-  input:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 4px rgb(26 115 232 / .15); }
+  input:focus, textarea:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 4px rgb(47 49 133 / .15); }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
   .chip-opt { position: relative; }
   .chip-opt input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
-  .chip-opt span { display: inline-block; padding: 10px 16px; border: 1.5px solid #d5dbe5; border-radius: 999px; font-size: .94rem; cursor: pointer; transition: .15s; }
-  .chip-opt input:checked + span { background: #e8f0fe; border-color: var(--blue); color: #174ea6; font-weight: 600; }
-  .chip-opt input:focus-visible + span { outline: 3px solid var(--blue); outline-offset: 2px; }
+  .chip-opt span { display: inline-block; padding: 10px 16px; border: 1.5px solid #cfd2e6; border-radius: 999px; font-size: .94rem; cursor: pointer; transition: .15s; }
+  .chip-opt input:checked + span { background: var(--tint); border-color: var(--navy); color: var(--navy); font-weight: 600; }
+  .chip-opt input:focus-visible + span { outline: 3px solid var(--navy); outline-offset: 2px; }
   .consent { display: flex; gap: 10px; align-items: flex-start; font-size: .92rem; color: var(--muted); }
-  .consent input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--blue); flex: none; }
+  .consent input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--navy); flex: none; }
   .form__submit { width: 100%; min-height: 56px; font-size: 1.05rem; }
   .form__submit:disabled { opacity: .7; cursor: progress; }
-  .form__err { margin: 0; color: #b3261e; background: #fce8e6; padding: 12px 14px; border-radius: 10px; font-size: .95rem; }
+  .form__err { margin: 0; color: #9a1a17; background: #fdeceb; padding: 12px 14px; border-radius: 10px; font-size: .95rem; }
   .form__or { margin: 0; text-align: center; font-size: .92rem; color: var(--muted); }
   .form__or a { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
-  .form__or :global(svg) { width: 18px; height: 18px; color: #25d366; }
+  .form__or :global(svg) { width: 18px; height: 18px; color: #1faa53; }
   .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
   @media (max-width: 900px) { .ct { grid-template-columns: 1fr; } }
   @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }

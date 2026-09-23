@@ -1,0 +1,18 @@
+---
+// Marca en texto real (accesible, 0 requests). TODO: cuando llegue el logo real del cliente,
+// poner el archivo en src/assets/brand/ y renderizarlo aquí con <Image> junto al texto.
+interface Props { inverse?: boolean }
+const { inverse = false } = Astro.props;
+---
+<span class:list={['brand-mark', { 'brand-mark--inv': inverse }]}>
+  <span class="brand-mark__name">English School</span>
+  <span class="brand-mark__city">Medellín</span>
+</span>
+<style>
+  .brand-mark { display: inline-flex; flex-direction: column; line-height: 1; white-space: nowrap; }
+  .brand-mark__name { font-family: var(--font-head); font-weight: 700; font-size: 1.32rem; color: var(--navy); letter-spacing: -0.01em; }
+  .brand-mark__city { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; font-family: var(--font-body); font-weight: 700; font-size: .66rem; letter-spacing: .28em; text-transform: uppercase; color: var(--navy-deep); }
+  .brand-mark__city::before { content: ''; width: 16px; height: 2px; background: var(--red); }
+  .brand-mark--inv .brand-mark__name { color: #fff; }
+  .brand-mark--inv .brand-mark__city { color: #d9dbf2; }
+</style>

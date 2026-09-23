@@ -1,0 +1,53 @@
+---
+import Icon from '../Icon.astro';
+import { SITE } from '../../config/site';
+import { copy } from '../../config/copy';
+const c = copy.programs;
+---
+<section class="section section--white" id="programas">
+  <div class="container">
+    <div class="section__head">
+      <p class="eyebrow">{c.eyebrow}</p>
+      <h2>{c.title}</h2>
+      <p class="lead">{c.lead}</p>
+    </div>
+    <ul class="grid prg">
+      {SITE.programs.map((p) => (
+        <li class="card prg__item" id={`programa-${p.id}`}>
+          <span class="prg__ic"><Icon name={p.icon} /></span>
+          <h3>{p.name}</h3>
+          <p class="prg__meta">{p.audience} · Nivel {p.level}</p>
+          <p>{p.description}</p>
+          <ul class="prg__modes" aria-label="Modalidad">
+            {p.modes.map((m) => <li>{c.modes[m]}</li>)}
+          </ul>
+          <a class="prg__cta" href={`#prueba`} data-program={p.name} data-cta={`program-${p.id}`}>{c.cta} →</a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+<script>
+  // Preselecciona el programa en el formulario al hacer clic en "Quiero este programa"
+  document.querySelectorAll<HTMLAnchorElement>('[data-program]').forEach((a) =>
+    a.addEventListener('click', () => {
+      const r = document.querySelector<HTMLInputElement>(`#lead-form input[name="program"][value="${a.dataset.program}"]`);
+      if (r) r.checked = true;
+    }),
+  );
+</script>
+<style>
+  .prg { grid-template-columns: repeat(3, 1fr); list-style: none; padding: 0; margin: 0; }
+  .prg__item { display: flex; flex-direction: column; background: var(--bg); transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+  .prg__item:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: #c3c6e4; }
+  .prg__item p { color: var(--muted); margin-bottom: 14px; }
+  .prg__item .prg__meta { color: var(--navy); font-weight: 600; font-size: .92rem; margin-bottom: 10px; }
+  .prg__ic { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 14px; margin-bottom: 18px; color: #fff; background: var(--navy); }
+  .prg__ic :global(svg) { width: 26px; height: 26px; }
+  .prg__modes { display: flex; gap: 8px; list-style: none; padding: 0; margin: 0 0 18px; }
+  .prg__modes li { font-size: .82rem; font-weight: 600; color: var(--navy-deep); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; }
+  .prg__cta { margin-top: auto; font-weight: 700; color: var(--cta); text-decoration: none; }
+  .prg__cta:hover { text-decoration: underline; }
+  @media (max-width: 960px) { .prg { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 620px) { .prg { grid-template-columns: 1fr; } }
+</style>
