@@ -1,0 +1,258 @@
+{
+  "name": "English School – Lead landing a CRM + correo",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "english-school-lead",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://englishschool.growthdigital.marketing,http://localhost:4321"
+        }
+      },
+      "id": "8eac17fb-9f6f-4820-8473-983983c76e14",
+      "name": "Webhook formulario",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "69e47600-abf4-461a-8c0a-78ede86c72da"
+    },
+    {
+      "parameters": {
+        "jsCode": "// English School – valida, limpia y normaliza el lead del formulario de matrícula.\nconst PROGRAMS = [\"Inglés para niños\", \"Inglés para jóvenes y adultos\", \"Clases personalizadas\"];\nconst MODES = ['Grupal', 'Personalizada', 'Aún no sé', ''];\nconst EMAIL = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/;\nconst clean = (v, max) => String(v ?? '').replace(/[\\u0000-\\u001f\\u007f]/g, ' ').trim().slice(0, max);\n\nconst raw = $input.first().json.body ?? $input.first().json;\nconst headers = $input.first().json.headers ?? {};\nconst ip = (headers['x-forwarded-for'] || headers['x-real-ip'] || '').split(',')[0].trim() || null;\n\n// Anti-spam: honeypot + tiempo mínimo en página (2.5 s)\nconst ts = Number(raw.ts);\nconst spam = !!clean(raw.website_url, 200) || (ts && Date.now() - ts < 2500);\n\nconst nombre = clean(raw.name, 80);\nconst email = clean(raw.email, 120).toLowerCase();\nconst telefono = clean(raw.phone, 20).replace(/[^\\d+()\\s-]/g, '');\nconst programa = clean(raw.program, 60);\nconst sede = clean(raw.sede, 60);\nconst modalidad = clean(raw.mode, 20);\nconst mensajeUsuario = clean(raw.message, 1000);\n\nlet error = null;\nif (nombre.length < 2) error = 'name';\nelse if (telefono.replace(/\\D/g, '').length < 7) error = 'phone';\nelse if (email && !EMAIL.test(email)) error = 'email';\nelse if (!PROGRAMS.includes(programa)) error = 'program';\nelse if (!sede) error = 'sede';\nelse if (!MODES.includes(modalidad)) error = 'mode';\nelse if (!(raw.consent === 'yes' || raw.consent === 'on' || raw.consent === true)) error = 'consent';\n\nlet utm = {};\ntry { const p = JSON.parse(String(raw.utm || '{}')); for (const [k, v] of Object.entries(p)) if (typeof v === 'string') utm[k.slice(0, 30)] = v.slice(0, 500); } catch {}\n\n// Mensaje que ve el asesor en el CRM: sede + tipo de clase + lo que escribió la persona\nconst mensaje = [`Sede: ${sede}`, modalidad && `Tipo de clase: ${modalidad}`, mensajeUsuario && `Mensaje: ${mensajeUsuario}`].filter(Boolean).join(' · ');\n\nreturn [{\n  json: {\n    spam, error, valid: !spam && !error,\n    lead: {\n      id: $execution.id + '-' + Date.now().toString(36),\n      nombre, email: email || null, telefono,\n      sede, modalidad,\n      servicioInteres: programa,\n      leadCalificado: true,\n      mensaje,\n      pagina: clean(raw.page, 200) || '/',\n      canal: utm.gclid || utm.gbraid || utm.wbraid ? 'google-ads' : utm.fbclid ? 'meta-ads' : (utm.utm_source || 'organico'),\n      gclid: utm.gclid ?? null,\n      utm,\n      fecha: new Date().toISOString(),\n      fechaLocal: new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'full', timeStyle: 'short' }) + ' (Colombia)',\n      ip,\n      userAgent: clean(raw.userAgent, 300) || null,\n      referrer: clean(raw.referrer, 300) || null,\n    },\n    next: '/gracias/',\n  },\n}];"
+      },
+      "id": "040fb4f8-e7f2-40cf-9d73-38d4b2186488",
+      "name": "Validar y normalizar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f50ac825-9c5b-4b4a-ae17-a4d5ed1eab0d",
+      "name": "¿Lead válido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://portal.growthdigital.marketing/api/crm/webhook/REEMPLAZAR_TOKEN_ENGLISH_SCHOOL",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "idempotency-key",
+              "value": "={{ $json.lead.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  nombre: $json.lead.nombre,\n  email: $json.lead.email,\n  telefono: $json.lead.telefono,\n  empresa: null,\n  ubicacion: $json.lead.sede,\n  servicioInteres: $json.lead.servicioInteres,\n  leadCalificado: $json.lead.leadCalificado,\n  mensaje: $json.lead.mensaje,\n  form: 'Landing English School – Matrículas',\n  landing_page: $json.lead.pagina,\n  utm_source: $json.lead.utm.utm_source || null,\n  utm_medium: $json.lead.utm.utm_medium || null,\n  utm_campaign: $json.lead.utm.utm_campaign || null,\n  utm_content: $json.lead.utm.utm_content || null,\n  utm_term: $json.lead.utm.utm_term || null,\n  gclid: $json.lead.gclid,\n  fbclid: $json.lead.utm.fbclid || null,\n  idioma: 'es',\n  referrer: $json.lead.referrer,\n  consentimiento: 'si',\n  lead_id_landing: $json.lead.id\n}) }}",
+        "options": {
+          "timeout": 8000,
+          "retry": {}
+        }
+      },
+      "id": "7d446ce0-8022-431f-862c-c3b6679ecb7d",
+      "name": "CRM English School (webhook)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        200
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "fromEmail": "Growth Digital <info@growthdigital.marketing>",
+        "toEmail": "innovacionpcell@gmail.com",
+        "subject": "=🎓 Nuevo lead English School: {{ $('Validar y normalizar').item.json.lead.nombre }} · {{ $('Validar y normalizar').item.json.lead.sede }}",
+        "emailFormat": "html",
+        "html": "={{ (() => { const l = $('Validar y normalizar').item.json.lead;\nconst esc = (s) => String(s ?? '—').replace(/[&<>\"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));\nconst tel = String(l.telefono || '').replace(/\\D/g, '');\nconst tel57 = tel.length === 10 ? '57' + tel : tel;\nconst first = (l.nombre || '').split(' ')[0];\nconst wa = `https://wa.me/${tel57}?text=${encodeURIComponent(`Hola ${first}, te escribimos de English School. Recibimos tus datos para matricularte en ${l.servicioInteres}. Te cuento las promociones vigentes y los horarios de la sede ${l.sede}.`)}`;\nconst btn = (href, label, bg) => `<td style=\"padding:0 8px 10px 0\"><a href=\"${href}\" style=\"display:inline-block;background:${bg};color:#fff;font-weight:700;font-size:14px;padding:12px 18px;border-radius:10px;text-decoration:none;font-family:Arial,sans-serif\">${label}</a></td>`;\nconst row = (k, v) => `<tr><td style=\"padding:9px 12px;border-bottom:1px solid #eceefa;color:#4a4d78;font-size:13px;width:130px\"><b>${k}</b></td><td style=\"padding:9px 12px;border-bottom:1px solid #eceefa;font-size:14px;color:#1c1e4a\">${v}</td></tr>`;\nreturn `<!DOCTYPE html><html><body style=\"margin:0;background:#f7f8fc;padding:24px 12px;font-family:Arial,sans-serif\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden\">\n<tr><td style=\"height:6px;background:#e22623;font-size:0\">&nbsp;</td></tr>\n<tr><td style=\"padding:24px 28px 8px\"><div style=\"font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#2f3185;font-weight:700\">Nuevo lead · Landing English School</div><h1 style=\"margin:6px 0 4px;font-size:22px;color:#1c1e4a\">${esc(l.nombre)}</h1><div style=\"color:#4a4d78;font-size:14px\">${esc(l.servicioInteres)} · Sede ${esc(l.sede)}</div></td></tr>\n<tr><td style=\"padding:12px 28px 4px\"><table role=\"presentation\"><tr>${btn(wa, '💬 WhatsApp', '#1faa53')}${btn('tel:' + l.telefono, '📞 Llamar', '#2f3185')}${btn('https://portal.growthdigital.marketing/', '📊 Ver en CRM', '#1c1e4a')}</tr></table></td></tr>\n<tr><td style=\"padding:8px 28px 24px\"><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"border:1px solid #eceefa;border-radius:12px\">\n${row('Teléfono', esc(l.telefono))}${row('Correo', esc(l.email))}${row('Programa', esc(l.servicioInteres))}${row('Sede', esc(l.sede))}${row('Tipo de clase', esc(l.modalidad))}${row('Mensaje', esc(l.mensaje))}${row('Canal', esc(l.canal))}${row('Fecha', esc(l.fechaLocal))}\n</table></td></tr></table></body></html>`; })() }}",
+        "options": {}
+      },
+      "id": "be989fde-90f2-4066-b870-e78f6090c836",
+      "name": "Aviso por correo",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        680,
+        400
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "c2c4e3eb-a38f-4b33-a26b-e90ffbb0f98c",
+      "name": "Esperar CRM + correo",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, id: $('Validar y normalizar').item.json.lead.id, next: '/gracias/' }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "6535411f-77a8-4a74-8285-e13c683d86dd",
+      "name": "Responder OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json.spam ? { ok: true, id: 'x', next: '/gracias/' } : { ok: false, error: $json.error }) }}",
+        "options": {
+          "responseCode": "={{ $json.spam ? 200 : 422 }}"
+        }
+      },
+      "id": "cf350fe5-50dc-4611-bd0d-b9fef0e10eb8",
+      "name": "Responder error / spam",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        680,
+        560
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook formulario": {
+      "main": [
+        [
+          {
+            "node": "Validar y normalizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar y normalizar": {
+      "main": [
+        [
+          {
+            "node": "¿Lead válido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Lead válido?": {
+      "main": [
+        [
+          {
+            "node": "CRM English School (webhook)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Aviso por correo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder error / spam",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM English School (webhook)": {
+      "main": [
+        [
+          {
+            "node": "Esperar CRM + correo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aviso por correo": {
+      "main": [
+        [
+          {
+            "node": "Esperar CRM + correo",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Esperar CRM + correo": {
+      "main": [
+        [
+          {
+            "node": "Responder OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "timezone": "America/Bogota"
+  },
+  "active": false
+}
