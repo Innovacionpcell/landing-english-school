@@ -1,23 +1,27 @@
 // Resumen para motores de IA (ChatGPT, Perplexity, Gemini, Claude)
 import type { APIRoute } from 'astro';
-import { SITE } from '../config/site';
+import { SITE, sedeLabel } from '../config/site';
 import { copy as c } from '../config/copy';
 export const GET: APIRoute = () => {
   const body = `# ${SITE.name}
 
 > ${c.meta.description}
 
-${SITE.gbpName} es una academia de inglés con sede en ${SITE.address.street}, ${SITE.address.neighborhood}, ${SITE.address.city} (Antioquia, Colombia). Ofrece clases presenciales en su sede y clases virtuales en vivo para Medellín, el Valle de Aburrá (${SITE.areaServed.valleDeAburra.join(', ')}) y el Oriente Antioqueño (${SITE.areaServed.oriente.join(', ')}). Niveles del MCER de A1 a C1. Prueba de nivel gratuita.
+${SITE.brand} es una academia de inglés con más de ${SITE.yearsExperience} años de experiencia y ${SITE.sedes.length} sedes en Medellín, Bello y Guarne (Oriente Antioqueño). Lema: "${SITE.slogan}". ${SITE.accreditation} Programa de 2 años hasta nivel B2 con Título Técnico oficial y opción de continuar a C1. Metodología 100 % práctica con 3 laboratorios (música, cine y cocina), sin libros, sin tareas y sin contrato de permanencia. Clases grupales o personalizadas.
+
+## Sedes
+${SITE.sedes.map((s) => `- ${sedeLabel(s)}${'address' in s ? `: ${s.address}, ${s.city}` : ''}`).join('\n')}
+- La sede Guarne atiende el Oriente Antioqueño: ${SITE.oriente.join(', ')}.
 
 ## Programas
-${SITE.programs.map((p) => `- ${p.name} (${p.audience}, nivel ${p.level}, ${p.modes.map((m) => c.programs.modes[m].toLowerCase()).join(' y ')}): ${p.description}`).join('\n')}
+${SITE.programs.map((p) => `- ${p.name} (${p.audience}, ${p.level}): ${p.description}`).join('\n')}
 
 ## Contacto
-- Web: ${SITE.url}/
-- Prueba de nivel: ${SITE.url}/#prueba
-- Teléfono / WhatsApp: ${SITE.phone}
+- Matrículas: ${SITE.url}/#matricula
+- WhatsApp: ${SITE.phone}
+- Correo: ${SITE.email}
 - Horario: ${SITE.hoursDisplay}
-- Google Maps: ${SITE.mapsUrl}
-${SITE.email ? `- Correo: ${SITE.email}\n` : ''}`;
+- Sitio oficial: ${SITE.officialSite}
+`;
   return new Response(body, { headers: { 'content-type': 'text/plain; charset=utf-8' } });
 };

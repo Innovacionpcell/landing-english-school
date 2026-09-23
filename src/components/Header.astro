@@ -7,7 +7,7 @@ const links = [
   { href: '/#programas', label: c.programs },
   { href: '/#por-que', label: c.why },
   { href: '/#metodologia', label: c.method },
-  { href: '/#sede', label: c.coverage },
+  { href: '/#sedes', label: c.coverage },
   { href: '/#faq', label: c.faq },
 ];
 ---
@@ -18,7 +18,7 @@ const links = [
       <ul>
         {links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
       </ul>
-      <a class="btn btn--sm" href="/#prueba" data-cta="header">{c.cta}</a>
+      <a class="btn btn--sm" href="/#matricula" data-cta="header">{c.cta}</a>
     </nav>
     <button class="burger" type="button" aria-controls="nav" aria-expanded="false" aria-label={c.menu}>
       <Icon name="menu" />

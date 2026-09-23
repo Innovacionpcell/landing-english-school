@@ -1,64 +1,74 @@
-// Fuente única de verdad: NAP, programas, WhatsApp y cobertura.
+// Fuente única de verdad: NAP, sedes, programas, WhatsApp y cobertura.
 // Schema JSON-LD, header, footer, formulario y botón flotante leen de aquí.
-// ⚠ Los campos marcados con TODO son placeholders: confirmar con el cliente antes de publicar.
+// Datos tomados de englishschool.com.co y de la ficha de Google (sept. 2026).
+// ⚠ Los campos marcados con TODO faltan por confirmar con el cliente.
 
 export const SITE = {
   url: 'https://englishschool.growthdigital.marketing',
   // false = <meta robots noindex> en todas las páginas. Cambiar a true cuando el cliente apruebe.
   indexable: false,
 
-  // Nombre visible de la marca
   name: 'English School Medellín',
-  // Nombre EXACTO del Perfil de Negocio de Google (NAP: debe coincidir con la ficha)
+  brand: 'English School',
+  // Nombre EXACTO del Perfil de Negocio de Google de la sede con ficha (NAP)
   gbpName: 'English School - Sede Medellín',
-  legalName: 'English School Medellín', // TODO: razón social + NIT para la política de datos
+  officialSite: 'https://www.englishschool.com.co/',
+  legalName: 'English School', // TODO: razón social + NIT para la política de datos
   nit: '', // TODO
-  // Categoría de la ficha: "Centro educativo"
-  email: '', // TODO: correo de contacto (se oculta mientras esté vacío)
+  slogan: 'Sin libros · Sin tareas · Sin estrés',
+  yearsExperience: 14,
+  accreditation: 'Educación para el trabajo y el desarrollo humano. Vigilados por la Secretaría de Educación.',
+  email: 'info@englishschool.com.co',
+  // Teléfono de la ficha de Google (sede Bello)
   phone: '+573016054350',
   phoneDisplay: '301 605 4350',
-  // Número de WhatsApp en formato internacional sin "+" (botón flotante, CTAs y respaldo del formulario)
-  whatsappNumber: '573016054350', // TODO: confirmar que este número tiene WhatsApp
-  whatsappText: 'Hola, quiero información sobre los cursos de inglés',
+  // WhatsApp de ESTA landing (distinto al del sitio oficial → permite atribuir los leads de la landing)
+  whatsappNumber: '573016054350',
+  whatsappText: 'Hola, quiero información para matricularme y conocer las promociones vigentes',
+  // Sede con Perfil de Negocio (NAP del schema LocalBusiness)
   address: {
-    street: 'Cl. 27B #58', // Tal cual la ficha de Google
+    street: 'Cl. 27B #58',
     neighborhood: 'La Gran Avenida',
     city: 'Bello',
     region: 'Antioquia',
     postalCode: '', // TODO
     country: 'CO',
   },
-  // Coordenadas del pin de la ficha. TODO: copiar lat/lng exactas desde Google Maps (se omiten del schema si son null)
-  geo: null as { lat: number; lng: number } | null,
-  // TODO: enlace de la ficha (Maps > Compartir) → https://maps.app.goo.gl/... o https://maps.google.com/?cid=...
-  mapsUrl: 'https://www.google.com/maps/search/?api=1&query=ENGLISH+SCHOOL+-+Sede+Medellin+Bello',
-  // TODO: días exactos. La ficha muestra cierre a las 5 p. m.
-  openingHours: [{ days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], opens: '08:00', closes: '17:00' }],
-  hoursDisplay: 'Lunes a viernes, 8:00 a. m. – 5:00 p. m.', // TODO
+  geo: null as { lat: number; lng: number } | null, // TODO: lat/lng exactas del pin de la ficha
+  mapsUrl: 'https://www.google.com/maps/search/?api=1&query=ENGLISH+SCHOOL+-+Sede+Medellin+Bello', // TODO: enlace directo de la ficha
+  // Horario del sitio oficial. TODO: la ficha de Google muestra cierre 5 p. m. → unificar con el cliente
+  openingHours: [{ days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], opens: '08:00', closes: '20:00' }],
+  hoursDisplay: 'Lunes a viernes, 8:00 a. m. – 8:00 p. m.',
   logo: '/logo-english-school.png', // TODO: reemplazar el placeholder por el logo real (PNG cuadrado ≥ 512 px)
 
-  // Cobertura (SEO local). La sede física está en Bello; el resto se atiende presencial por cercanía y/o virtual.
-  areaServed: {
-    main: 'Medellín',
-    valleDeAburra: ['Medellín', 'Bello', 'Itagüí', 'Envigado', 'Sabaneta', 'La Estrella', 'Caldas', 'Copacabana', 'Girardota', 'Barbosa'],
-    oriente: ['Rionegro', 'Marinilla', 'El Carmen de Viboral', 'La Ceja', 'El Retiro', 'Guarne', 'El Santuario', 'La Unión'],
-  },
-
-  // Programas → sección "Programas", opciones del formulario y un schema Course por cada uno.
-  // TODO: confirmar nombres, edades, duración y modalidad con el cliente.
-  programs: [
-    { id: 'ninos', name: 'Inglés para niños', audience: 'Niños de 6 a 12 años', level: 'A1–A2', modes: ['onsite'], icon: 'kids', description: 'Clases dinámicas con juego, canciones y proyectos para que los niños pierdan el miedo y hablen inglés desde la primera clase.' },
-    { id: 'adolescentes', name: 'Inglés para adolescentes', audience: 'Jóvenes de 13 a 17 años', level: 'A1–B2', modes: ['onsite', 'online'], icon: 'teen', description: 'Refuerzo para el colegio y preparación para la vida universitaria, con conversación real y seguimiento de avance.' },
-    { id: 'adultos', name: 'Inglés para adultos', audience: 'Adultos desde cero o con bases', level: 'A1–C1', modes: ['onsite', 'online'], icon: 'adult', description: 'Horarios flexibles para quienes trabajan o estudian. Enfoque conversacional para usar el inglés en viajes, trabajo y estudios.' },
-    { id: 'empresas', name: 'Inglés para empresas', audience: 'Equipos y profesionales', level: 'A2–C1', modes: ['onsite', 'online'], icon: 'work', description: 'Planes a la medida para equipos: inglés de negocios, reuniones, correos y atención a clientes internacionales.' },
-    { id: 'examenes', name: 'Preparación de exámenes internacionales', audience: 'Estudiantes y profesionales', level: 'B1–C1', modes: ['onsite', 'online'], icon: 'exam', description: 'Entrenamiento por habilidades y simulacros para exámenes de certificación, becas, visas y admisiones.' },
+  // 9 sedes (sitio oficial). TODO: direcciones de cada sede para mostrarlas y enlazar a Maps.
+  sedes: [
+    { name: 'Pedregal', city: 'Medellín', zone: 'medellin' },
+    { name: 'San Cristóbal', city: 'Medellín', zone: 'medellin' },
+    { name: 'Aranjuez', city: 'Medellín', zone: 'medellin' },
+    { name: 'Girardot', city: 'Medellín', zone: 'medellin' },
+    { name: 'San Antonio de Prado', city: 'Medellín', zone: 'medellin' },
+    { name: 'La Milagrosa', city: 'Medellín', zone: 'medellin' },
+    { name: 'Robledo', city: 'Medellín', zone: 'medellin' },
+    { name: 'Cabañas', city: 'Bello', zone: 'bello', address: 'Cl. 27B #58, La Gran Avenida' },
+    { name: 'Guarne', city: 'Guarne', zone: 'oriente' },
   ],
 
-  // Redes. TODO: agregar URLs reales (se usan en footer y en schema sameAs). Vacío = no se muestra.
+  // Municipios del Oriente Antioqueño atendidos desde la sede Guarne
+  oriente: ['Guarne', 'Rionegro', 'Marinilla', 'El Carmen de Viboral', 'La Ceja', 'El Retiro', 'El Santuario', 'San Vicente'],
+
+  // Programas (sitio oficial). → sección Programas, formulario y un schema Course por cada uno.
+  programs: [
+    { id: 'ninos', name: 'Inglés para niños', audience: 'Niños', level: 'Básico a intermedio', icon: 'kids', duration: '', description: 'Aprenden inglés de forma natural y divertida: cantando, viendo películas y series para su edad y cocinando. Sin la presión de libros de texto y en un ambiente seguro y supervisado.' },
+    { id: 'adultos', name: 'Inglés para jóvenes y adultos', audience: 'Jóvenes y adultos', level: 'Hasta B2 (opción C1)', icon: 'adult', duration: 'P2Y', description: 'Programa completo de 2 años hasta nivel B2 con Título Técnico oficial y opción de continuar a C1. 100 % práctico, sin libros ni tareas.' },
+    { id: 'personalizado', name: 'Clases personalizadas', audience: 'Jóvenes y adultos', level: 'Según tu nivel', icon: 'users', duration: '', description: 'A tu ritmo y en tu horario, con los mismos laboratorios prácticos y la misma ruta hacia el B2 con título técnico.' },
+  ],
+
+  // Redes (se usan en footer y en schema sameAs). Vacío = no se muestra.
   social: [
-    { id: 'instagram', label: 'Instagram', url: '' },
-    { id: 'facebook', label: 'Facebook', url: '' },
-    { id: 'tiktok', label: 'TikTok', url: '' },
+    { id: 'instagram', label: 'Instagram', url: 'https://www.instagram.com/englishschool4ever/' },
+    { id: 'facebook', label: 'Facebook', url: '' }, // TODO
+    { id: 'tiktok', label: 'TikTok', url: '' }, // TODO
   ],
 } as const;
 
@@ -66,4 +76,5 @@ export const whatsappUrl = (text: string = SITE.whatsappText) =>
   `https://wa.me/${SITE.whatsappNumber}?text=${encodeURIComponent(text)}`;
 
 export const socialLinks = SITE.social.filter((s) => s.url);
+export const sedeLabel = (s: (typeof SITE.sedes)[number]) => (s.city === 'Medellín' || s.name === s.city ? s.name : `${s.name} (${s.city})`);
 export type Program = (typeof SITE.programs)[number];

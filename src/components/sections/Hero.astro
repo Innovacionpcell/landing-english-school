@@ -3,6 +3,7 @@ import Icon from '../Icon.astro';
 import { whatsappUrl } from '../../config/site';
 import { copy } from '../../config/copy';
 const c = copy.hero;
+// Si copy.promo tiene texto, la promo vigente se muestra como etiqueta amarilla en la tarjeta (y el primer ítem deja de resaltarse)
 ---
 <section class="hero">
   <div class="container hero__grid">
@@ -11,7 +12,7 @@ const c = copy.hero;
       <h1>{c.h1a} <span class="hl">{c.h1b}</span></h1>
       <p class="lead">{c.sub}</p>
       <div class="hero__ctas">
-        <a class="btn" href="#prueba" data-cta="hero"><Icon name="calendar" />{c.cta1}</a>
+        <a class="btn" href="#matricula" data-cta="hero">{c.cta1}</a>
         <a class="btn btn--wa" href={whatsappUrl()} target="_blank" rel="noopener" data-cta="hero-wa"><Icon name="whatsapp" />{c.cta2}</a>
       </div>
       <ul class="proof">
@@ -20,11 +21,12 @@ const c = copy.hero;
     </div>
     <aside class="hero__card" aria-labelledby="hero-card-t">
       <span class="stripes" aria-hidden="true"></span>
+      {copy.promo && <p class="hero__promo">{copy.promo}</p>}
       <p class="hero__card-t" id="hero-card-t">{c.cardTitle}</p>
-      <ol>
-        {c.cardSteps.map((s, i) => <li><span>{i + 1}</span>{s}</li>)}
-      </ol>
-      <a class="hero__card-cta" href="#prueba" data-cta="hero-card">{c.cta1} →</a>
+      <ul>
+        {c.cardItems.map((s, i) => <li class={i === 0 && !copy.promo ? 'is-hl' : undefined}><span><Icon name="check" /></span>{s}</li>)}
+      </ul>
+      <a class="btn hero__card-cta" href="#matricula" data-cta="hero-card">{c.cardCta}</a>
     </aside>
   </div>
 </section>
@@ -42,14 +44,15 @@ const c = copy.hero;
 
   .hero__card { position: relative; overflow: hidden; background: var(--navy); color: #e7e8f6; border-radius: 24px; padding: clamp(28px, 4vw, 40px); box-shadow: var(--shadow-lg); }
   /* Franjas de la bandera: detalle decorativo en rojo */
-  .stripes { position: absolute; right: -30px; bottom: 16px; width: 120px; height: 42px; background: repeating-linear-gradient(180deg, var(--red) 0 8px, transparent 8px 16px); opacity: .9; transform: rotate(-8deg); }
-  .hero__card-t { position: relative; font-family: var(--font-head); font-weight: 700; font-size: 1.55rem; color: #fff; margin: 0 0 22px; max-width: 70%; line-height: 1.2; }
-  .hero__card ol { list-style: none; padding: 0; margin: 0 0 26px; display: grid; gap: 14px; }
-  .hero__card li { display: flex; align-items: center; gap: 14px; font-weight: 500; color: #fff; }
-  .hero__card li span { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; border: 2px solid rgb(255 255 255 / .35); font-weight: 700; }
-  .hero__card li:first-child span { background: var(--yellow); border-color: var(--yellow); color: var(--navy-deep); } /* único acento amarillo */
-  .hero__card-cta { color: #fff; font-weight: 700; text-decoration: underline; text-decoration-color: rgb(255 255 255 / .4); text-underline-offset: 5px; }
-  .hero__card-cta:hover { text-decoration-color: #fff; }
+  .stripes { position: absolute; right: -30px; top: 30px; width: 110px; height: 42px; background: repeating-linear-gradient(180deg, var(--red) 0 8px, transparent 8px 16px); opacity: .9; transform: rotate(-8deg); }
+  .hero__promo { position: relative; display: inline-block; margin: 0 0 14px; background: var(--yellow); color: var(--navy-deep); font-weight: 700; font-size: .9rem; border-radius: 999px; padding: 4px 12px; }
+  .hero__card-t { position: relative; font-family: var(--font-head); font-weight: 700; font-size: 1.55rem; color: #fff; margin: 0 0 22px; line-height: 1.2; max-width: 78%; }
+  .hero__card ul { list-style: none; padding: 0; margin: 0 0 28px; display: grid; gap: 14px; }
+  .hero__card li { display: flex; align-items: center; gap: 12px; font-weight: 500; color: #fff; }
+  .hero__card li span { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 2px solid rgb(255 255 255 / .35); }
+  .hero__card li span :global(svg) { width: 16px; height: 16px; }
+  .hero__card li.is-hl span { background: var(--yellow); border-color: var(--yellow); color: var(--navy-deep); } /* único acento amarillo */
+  .hero__card-cta { width: 100%; }
 
   @media (max-width: 900px) {
     .hero::after { display: none; }

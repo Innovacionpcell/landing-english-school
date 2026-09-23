@@ -1,22 +1,24 @@
 ---
 import Icon from '../Icon.astro';
-import { SITE, whatsappUrl } from '../../config/site';
+import { SITE, whatsappUrl, sedeLabel } from '../../config/site';
 import { copy } from '../../config/copy';
 import { PUBLIC_N8N_WEBHOOK_URL } from 'astro:env/client';
 const c = copy.contact;
 const f = c.fields;
 const webhook = PUBLIC_N8N_WEBHOOK_URL ?? '';
-const programs = [...SITE.programs.map((p) => p.name), c.generalOption];
+const programs = SITE.programs.map((p) => p.name);
 ---
-<section class="section section--white" id="prueba">
+<section class="section section--white" id="matricula">
   <div class="container ct">
     <div class="ct__side">
       <p class="eyebrow">{c.eyebrow}</p>
       <h2>{c.title}</h2>
       <p class="lead">{c.lead}</p>
+      {copy.promo && <p class="ct__promo">{copy.promo}</p>}
       <ol class="ct__steps">
         {c.steps.map((s, i) => <li><span>{i + 1}</span>{s}</li>)}
       </ol>
+      <p class="ct__urgency">{c.urgency}</p>
       <div class="ct__nap card">
         <p class="ct__h">{c.napTitle}</p>
         <p><Icon name="pin" />{SITE.address.street}, {SITE.address.neighborhood}, {SITE.address.city}</p>
@@ -26,7 +28,7 @@ const programs = [...SITE.programs.map((p) => p.name), c.generalOption];
       </div>
     </div>
 
-    <form class="form card" id="lead-form" method="post" action={webhook || '#prueba'} data-webhook={webhook} data-wa={`https://wa.me/${SITE.whatsappNumber}`} novalidate>
+    <form class="form card" id="lead-form" method="post" action={webhook || '#matricula'} data-webhook={webhook} data-wa={`https://wa.me/${SITE.whatsappNumber}`} novalidate>
       <input type="hidden" name="source" value="landing-english-school" />
       <input type="hidden" name="page" value="" />
       <input type="hidden" name="ts" value="" />
@@ -45,16 +47,13 @@ const programs = [...SITE.programs.map((p) => p.name), c.generalOption];
           <input id="lf-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" required minlength="7" maxlength="20" placeholder="300 000 0000" />
         </div>
         <div class="field">
-          <label for="lf-email">{f.email} *</label>
-          <input id="lf-email" name="email" type="email" autocomplete="email" inputmode="email" required maxlength="120" />
+          <label for="lf-sede">{f.sede} *</label>
+          <select id="lf-sede" name="sede" required>
+            <option value="" disabled selected>{f.sedePh}</option>
+            {SITE.sedes.map((sd) => <option value={`${sd.name} (${sd.city})`}>{sedeLabel(sd)}</option>)}
+            <option value="Sin definir">{f.sedeAny}</option>
+          </select>
         </div>
-      </div>
-      <div class="field">
-        <label for="lf-location">{f.location} *</label>
-        <input id="lf-location" name="location" type="text" autocomplete="address-level2" list="lf-municipios" required minlength="2" maxlength="80" placeholder={f.locationPh} />
-        <datalist id="lf-municipios">
-          {[...SITE.areaServed.valleDeAburra, ...SITE.areaServed.oriente].map((m) => <option value={m} />)}
-        </datalist>
       </div>
       <fieldset class="field">
         <legend>{f.program} *</legend>
@@ -79,6 +78,10 @@ const programs = [...SITE.programs.map((p) => p.name), c.generalOption];
         </div>
       </fieldset>
       <div class="field">
+        <label for="lf-email">{f.email}</label>
+        <input id="lf-email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="120" />
+      </div>
+      <div class="field">
         <label for="lf-msg">{f.message}</label>
         <textarea id="lf-msg" name="message" rows="3" maxlength="1000"></textarea>
       </div>
@@ -87,7 +90,7 @@ const programs = [...SITE.programs.map((p) => p.name), c.generalOption];
         <span>{f.consent} <a href="/privacidad/" target="_blank">{f.privacy}</a>. *</span>
       </label>
       <button class="btn form__submit" type="submit" data-label={c.submit} data-sending={c.sending}>
-        <Icon name="calendar" /><span>{c.submit}</span>
+        <span>{c.submit}</span>
       </button>
       <p class="form__err" role="alert" hidden>{c.error}</p>
       <p class="form__or">{c.or} <a href={whatsappUrl()} target="_blank" rel="noopener"><Icon name="whatsapp" />WhatsApp</a></p>
@@ -125,7 +128,7 @@ const programs = [...SITE.programs.map((p) => p.name), c.generalOption];
 
       // Sin webhook configurado (PUBLIC_N8N_WEBHOOK_URL vacío): el lead sale por WhatsApp con el mensaje prellenado
       if (!webhook) {
-        const msg = `Hola, soy ${body.name} (${body.location}). Quiero la prueba de nivel para: ${body.program}${body.mode ? `, modalidad ${body.mode.toLowerCase()}` : ''}.${body.message ? ` ${body.message}` : ''} Mi correo: ${body.email}`;
+        const msg = `Hola, soy ${body.name}. Quiero matricularme en ${body.program}${body.mode ? ` (clase ${body.mode.toLowerCase()})` : ''}, sede ${body.sede}. ¿Qué promociones tienen vigentes?${body.message ? ` ${body.message}` : ''}${body.email ? ` Mi correo: ${body.email}` : ''}`;
         window.open(`${form.dataset.wa}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
         location.assign(next);
         return;
@@ -141,7 +144,7 @@ const programs = [...SITE.programs.map((p) => p.name), c.generalOption];
         });
         const json = await res.json().catch(() => ({}));
         if (!res.ok || json.ok === false) throw new Error(json.error || 'error');
-        (window as any).dataLayer?.push({ event: 'generate_lead', lead_program: body.program, lead_id: json.id ?? null });
+        (window as any).dataLayer?.push({ event: 'generate_lead', lead_program: body.program, lead_sede: body.sede, lead_id: json.id ?? null });
         location.assign(next);
       } catch {
         err.hidden = false;
@@ -166,12 +169,15 @@ const programs = [...SITE.programs.map((p) => p.name), c.generalOption];
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .field { display: grid; gap: 6px; border: 0; padding: 0; margin: 0; min-width: 0; }
   .field label, legend { font-weight: 600; color: var(--ink); font-size: .95rem; padding: 0; margin-bottom: 6px; }
-  input[type='text'], input[type='email'], input[type='tel'], textarea {
+  input[type='text'], input[type='email'], input[type='tel'], select, textarea {
     width: 100%; font: inherit; font-size: 1rem; color: var(--ink); background: #fff;
     border: 1.5px solid #cfd2e6; border-radius: 12px; padding: 13px 14px; min-height: 50px; transition: border-color .15s, box-shadow .15s;
   }
   textarea { resize: vertical; min-height: 90px; }
-  input:focus, textarea:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 4px rgb(47 49 133 / .15); }
+  select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%232f3185' stroke-width='2'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 38px; }
+  .ct__promo { display: inline-block; background: var(--navy); color: #fff; font-weight: 700; border-left: 4px solid var(--yellow); border-radius: 10px; padding: 10px 14px; }
+  .ct__urgency { font-weight: 700; color: var(--cta); margin: -12px 0 24px; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 4px rgb(47 49 133 / .15); }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
   .chip-opt { position: relative; }
   .chip-opt input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }

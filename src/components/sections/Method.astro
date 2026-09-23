@@ -1,4 +1,5 @@
 ---
+import Icon from '../Icon.astro';
 import { copy } from '../../config/copy';
 const c = copy.method;
 ---
@@ -8,29 +9,24 @@ const c = copy.method;
       <p class="eyebrow">{c.eyebrow}</p>
       <h2>{c.title}</h2>
     </div>
-    <ol class="steps">
-      {c.steps.map((s, i) => (
+    <ul class="labs">
+      {c.labs.map((l) => (
         <li>
-          <span class="steps__n">{i + 1}</span>
-          <h3>{s.t}</h3>
-          <p>{s.d}</p>
+          <span class="labs__ic"><Icon name={l.icon} /></span>
+          <h3>{l.t}</h3>
+          <p>{l.d}</p>
         </li>
       ))}
-    </ol>
-    <p class="center"><a class="btn" href="#prueba" data-cta="method">{copy.hero.cta1}</a></p>
+    </ul>
+    <p class="center"><a class="btn" href="#matricula" data-cta="method">{copy.hero.cta1}</a></p>
   </div>
 </section>
 <style>
-  .steps { list-style: none; padding: 0; margin: 0 0 48px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; position: relative; }
-  .steps::before { content: ''; position: absolute; left: 12%; right: 12%; top: 27px; height: 2px; background: rgb(255 255 255 / .25); }
-  .steps li { position: relative; text-align: center; padding: 0 8px; }
-  .steps__n { position: relative; display: grid; place-items: center; width: 56px; height: 56px; margin: 0 auto 18px; border-radius: 50%; background: var(--navy); border: 2px solid rgb(255 255 255 / .55); color: #fff; font-family: var(--font-head); font-weight: 700; font-size: 1.35rem; }
-  .steps p { color: #d6d8f0; margin: 0; }
+  .labs { list-style: none; padding: 0; margin: 0 0 48px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .labs li { border: 1px solid rgb(255 255 255 / .18); border-radius: var(--radius); padding: clamp(24px, 3vw, 32px); background: rgb(255 255 255 / .04); }
+  .labs__ic { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 14px; margin-bottom: 18px; color: var(--navy); background: #fff; }
+  .labs__ic :global(svg) { width: 26px; height: 26px; }
+  .labs p { color: #d6d8f0; margin: 0; }
   .center { text-align: center; margin: 0; }
-  @media (max-width: 860px) {
-    .steps { grid-template-columns: 1fr; gap: 28px; }
-    .steps::before { left: 27px; right: auto; top: 10px; bottom: 10px; width: 2px; height: auto; }
-    .steps li { text-align: left; padding-left: 78px; }
-    .steps__n { position: absolute; left: 0; top: -6px; margin: 0; }
-  }
+  @media (max-width: 860px) { .labs { grid-template-columns: 1fr; } }
 </style>
