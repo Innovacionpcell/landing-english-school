@@ -1,0 +1,32 @@
+---
+import { t, type Lang } from '../../i18n/copy';
+const { lang } = Astro.props as { lang: Lang };
+const c = t(lang).approach;
+const colors = ['blue', 'red', 'yellow'];
+---
+<section class="section section--soft" id="enfoque">
+  <div class="container ap">
+    <div>
+      <p class="eyebrow">{c.eyebrow}</p>
+      <h2>{c.title}</h2>
+      <p class="lead">{c.lead}</p>
+    </div>
+    <ol class="ap__list">
+      {c.points.map((p, i) => (
+        <li class={`card dot--${colors[i]}`}>
+          <span class="n">0{i + 1}</span>
+          <div><h3>{p.k}</h3><p>{p.v}</p></div>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>
+<style>
+  .ap { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 6vw, 80px); align-items: center; }
+  .ap__list { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+  .ap__list li { display: flex; gap: 18px; align-items: flex-start; padding: 22px 24px; }
+  .ap__list h3 { margin-bottom: 4px; }
+  .ap__list p { margin: 0; color: var(--muted); }
+  .n { flex: none; font-family: var(--font-head); font-weight: 800; font-size: 1.1rem; color: var(--ink); width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: #fff; border: 2.5px solid var(--c); }
+  @media (max-width: 860px) { .ap { grid-template-columns: 1fr; } }
+</style>

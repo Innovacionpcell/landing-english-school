@@ -1,0 +1,26 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../config/site';
+---
+<Base title="Política de Tratamiento de Datos Personales | Growth Digital" description="Política de tratamiento de datos personales de Growth Digital conforme a la Ley 1581 de 2012 de Colombia.">
+  <section class="section">
+    <div class="container prose">
+      <h1>Política de tratamiento de datos personales</h1>
+      <p><strong>Responsable:</strong> {SITE.founder.name} – {SITE.name}. {SITE.address.street}, {SITE.address.city}, Colombia. Correo: <a href={`mailto:${SITE.email}`}>{SITE.email}</a>. Teléfono: {SITE.phoneDisplay}.</p>
+      <h2>1. Datos que recolectamos</h2>
+      <p>Nombre, correo electrónico, teléfono, empresa o sitio web, servicio de interés, mensaje y datos de navegación y atribución (fuente de la visita, campaña, página).</p>
+      <h2>2. Finalidad</h2>
+      <ul>
+        <li>Contactarte para agendar y realizar el diagnóstico solicitado.</li>
+        <li>Enviarte propuestas comerciales y dar seguimiento a tu solicitud.</li>
+        <li>Medir el desempeño de nuestras campañas de marketing.</li>
+      </ul>
+      <h2>3. Encargados</h2>
+      <p>Tus datos se almacenan en nuestro CRM propio y pueden ser procesados por proveedores tecnológicos (Google, Hostinger y herramientas de automatización) exclusivamente para las finalidades descritas.</p>
+      <h2>4. Tus derechos</h2>
+      <p>Conforme a la Ley 1581 de 2012 y el Decreto 1377 de 2013, puedes conocer, actualizar, rectificar y suprimir tus datos, y revocar la autorización escribiendo a <a href={`mailto:${SITE.email}`}>{SITE.email}</a>. Responderemos en los plazos legales (10 días hábiles para consultas y 15 para reclamos).</p>
+      <h2>5. Vigencia</h2>
+      <p>Conservaremos tus datos mientras exista una relación comercial o hasta que solicites su supresión. Esta política rige desde el 21 de septiembre de 2026.</p>
+    </div>
+  </section>
+</Base>

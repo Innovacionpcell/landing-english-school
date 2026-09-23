@@ -1,0 +1,160 @@
+---
+/**
+ * Listado del blog: cuadrícula de 3 columnas × 6 filas (18 artículos por página).
+ * Página 1 → /blog/  ·  siguientes → /blog/pagina/2/, /blog/pagina/3/ …
+ */
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import PostCard from './PostCard.astro';
+import Icon from './Icon.astro';
+import { SITE } from '../config/site';
+import { t } from '../i18n/copy';
+import { graph, organizationGraph, breadcrumb } from '../lib/schema';
+
+export const PER_PAGE = 18; // 3 columnas × 6 filas
+export async function allPosts() {
+  return (await getCollection('blog', ({ data }) => !data.draft)).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+}
+export const pageUrl = (n: number) => (n <= 1 ? '/blog/' : `/blog/pagina/${n}/`);
+
+const { page = 1 } = Astro.props as { page?: number };
+const c = t('es').blog;
+const all = await allPosts();
+const totalPages = Math.max(1, Math.ceil(all.length / PER_PAGE));
+const posts = all.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+const title = page > 1 ? `${c.pageTitle} · ${c.page} ${page}` : c.pageTitle;
+const schema = graph(
+  organizationGraph('es'),
+  { '@type': 'Blog', '@id': `${SITE.url}/blog/#blog`, url: `${SITE.url}/blog/`, name: c.pageTitle, description: c.pageDescription, publisher: { '@id': `${SITE.url}/#organization` },
+    blogPost: posts.map((p) => ({ '@type': 'BlogPosting', headline: p.data.title, url: `${SITE.url}/blog/${p.id}/`, datePublished: p.data.pubDate.toISOString() })) },
+  breadcrumb([{ name: 'Inicio', url: `${SITE.url}/` }, { name: 'Blog', url: `${SITE.url}/blog/` }]),
+);
+const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+---
+<Base title={title} description={c.pageDescription} schema={schema}>
+  <section class="section blog">
+    <div class="container">
+      <div class="section__head">
+        <p class="eyebrow">{c.eyebrow}</p>
+        <h1>{c.title}</h1>
+        <p class="lead">{c.pageDescription}</p>
+      </div>
+      {page === 1 && SITE.soroEmbed && (
+        <div class="soro" data-author={`${SITE.founder.name} · ${SITE.name}`} data-by={c.by} data-more={c.loadMore} data-per-page="18">
+          <div id="soro-blog"></div>
+          <script is:inline src={SITE.soroEmbed} defer></script>
+          <script is:inline>
+            // Ajustes sobre el embed de Soro: paginación 3×6 (18 por página), autor en tarjetas y artículo,
+            // y autor/publisher en el JSON-LD que inyecta Soro. No toca el contenido, solo lo presenta.
+            (function () {
+              var wrap = document.querySelector('.soro'); var root = document.getElementById('soro-blog');
+              if (!wrap || !root) return;
+              var PER = parseInt(wrap.dataset.perPage, 10) || 18, AUTHOR = wrap.dataset.author, BY = wrap.dataset.by, MORE = wrap.dataset.more;
+              var page = 1;
+              function paginate() {
+                var list = root.querySelector('.soro-blog-list'); if (!list) return;
+                var cards = list.querySelectorAll('.soro-blog-card'); if (!cards.length) return;
+                cards.forEach(function (card, i) {
+                  card.style.display = i < page * PER ? '' : 'none';
+                  if (!card.querySelector('.soro-blog-card-by')) {
+                    var by = document.createElement('p'); by.className = 'soro-blog-card-by'; by.textContent = BY + ' ' + AUTHOR;
+                    var body = card.querySelector('.soro-blog-card-content'); if (body) body.appendChild(by);
+                  }
+                });
+                var btn = wrap.querySelector('.soro-more');
+                if (cards.length > page * PER) {
+                  if (!btn) { btn = document.createElement('button'); btn.type = 'button'; btn.className = 'btn btn--ghost soro-more'; btn.textContent = MORE; btn.addEventListener('click', function () { page++; paginate(); }); wrap.appendChild(btn); }
+                } else if (btn) btn.remove();
+              }
+              function article() {
+                var art = root.querySelector('.soro-blog-article');
+                var sec = wrap.closest('.blog'); if (sec) sec.classList.toggle('is-article', !!art);
+                if (!art || art.querySelector('.soro-blog-article-by')) return;
+                var by = document.createElement('p'); by.className = 'soro-blog-article-by'; by.textContent = BY + ' ' + AUTHOR;
+                var time = art.querySelector('.soro-blog-article-date'); if (time && time.parentNode) time.parentNode.insertBefore(by, time.nextSibling);
+                var btn = wrap.querySelector('.soro-more'); if (btn) btn.remove();
+              }
+              function jsonld() {
+                var s = document.getElementById('soro-blog-jsonld'); if (!s || s.dataset.gd) return;
+                try {
+                  var d = JSON.parse(s.textContent); var person = { '@type': 'Person', name: AUTHOR.split(' · ')[0], url: location.origin + '/#sobre-mi' };
+                  var org = { '@type': 'Organization', name: AUTHOR.split(' · ')[1] || 'Growth Digital', url: location.origin + '/' };
+                  var add = function (x) { x.author = person; x.publisher = org; x.inLanguage = 'es'; };
+                  if (d['@type'] === 'BlogPosting') add(d); if (Array.isArray(d.blogPost)) d.blogPost.forEach(add);
+                  s.textContent = JSON.stringify(d); s.dataset.gd = '1';
+                } catch (e) {}
+              }
+              var mo = new MutationObserver(function () { paginate(); article(); jsonld(); });
+              mo.observe(root, { childList: true, subtree: true });
+              new MutationObserver(jsonld).observe(document.head, { childList: true });
+              paginate(); article(); jsonld();
+            })();
+          </script>
+        </div>
+      )}
+      {posts.length > 0 && <h2 class="founder-title">{c.founderPosts}</h2>}
+      <ul class="grid list">
+        {posts.map((p, i) => <li><PostCard post={p} lang="es" eager={i < 3} /></li>)}
+      </ul>
+      {totalPages > 1 && (
+        <nav class="pager" aria-label="Paginación">
+          {page > 1 ? <a class="btn btn--ghost" href={pageUrl(page - 1)} rel="prev"><Icon name="arrow" /> {c.prev}</a> : <span />}
+          <ol class="pager__pages">
+            {pages.map((n) => <li><a href={pageUrl(n)} aria-current={n === page ? 'page' : undefined} class:list={['pager__n', { 'is-active': n === page }]}>{n}</a></li>)}
+          </ol>
+          {page < totalPages ? <a class="btn btn--ghost" href={pageUrl(page + 1)} rel="next">{c.next} <Icon name="arrow" /></a> : <span />}
+        </nav>
+      )}
+    </div>
+  </section>
+  <Fragment slot="head">
+    {page > 1 && <link rel="prev" href={pageUrl(page - 1)} />}
+    {page < totalPages && <link rel="next" href={pageUrl(page + 1)} />}
+  </Fragment>
+</Base>
+<style>
+  .blog h1 { font-size: clamp(2.2rem, 4.6vw, 3.4rem); }
+  .founder-title { font-size: 1.6rem; margin: 64px 0 24px; }
+  /* ---- Embed de Soro con la identidad del sitio (clases reales del script de Soro) ---- */
+  .soro { margin-bottom: 8px; text-align: center; }
+  .soro :global(.soro-blog) { max-width: none; font-family: var(--font-body); color: var(--ink); text-align: left; }
+  .soro :global(.soro-blog-list) { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap, 24px); }
+  .soro :global(.soro-blog-card) { flex-direction: column; gap: 0; padding: 0; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; transition: transform .2s ease, box-shadow .2s ease; }
+  .soro :global(.soro-blog-card), .soro :global(.soro-blog-card *) { text-decoration: none; color: inherit; }
+  .soro :global(.soro-blog-card:hover) { transform: translateY(-4px); box-shadow: var(--shadow); border-color: var(--line); }
+  .soro :global(.soro-blog-card-image) { width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 0; }
+  .soro :global(.soro-blog-card-content) { display: flex; flex-direction: column; padding: 22px 24px 26px; }
+  .soro :global(h2.soro-blog-card-title) { font-family: var(--font-head); font-size: 1.18rem; font-weight: 800; line-height: 1.25; color: var(--ink); margin: 0 0 8px; }
+  .soro :global(.soro-blog-card-excerpt) { color: var(--muted); font-size: .98rem; -webkit-line-clamp: 3; margin: 0 0 12px; flex: 1; }
+  .soro :global(.soro-blog-card-date) { font-size: .84rem; color: var(--muted); order: -1; margin-bottom: 10px; }
+  .soro :global(.soro-blog-card-date)::before { content: 'Blog · '; color: var(--blue); font-weight: 600; }
+  .soro :global(.soro-blog-card-by) { font-size: .84rem; color: var(--muted); margin: 0 0 6px; }
+  .soro :global(.soro-blog-card-content)::after { content: 'Leer artículo →'; font-family: var(--font-head); font-weight: 700; color: var(--blue); font-size: .95rem; }
+  .soro :global(.soro-more) { margin-top: 36px; }
+  /* Vista de artículo (/blog/?post=…) */
+  .soro :global(.soro-blog-header) { justify-content: flex-start; max-width: 820px; margin: 0 auto 24px; }
+  .soro :global(.soro-blog-back) { border-color: var(--line); color: var(--muted); border-radius: 999px; font-family: var(--font-head); font-weight: 700; text-decoration: none; }
+  .blog.is-article .section__head { display: none; }
+  .blog.is-article .founder-title { margin-top: 80px; }
+  .soro :global(.soro-blog-article) { max-width: 820px; margin: 0 auto; }
+  .soro :global(.soro-blog-article-title) { font-family: var(--font-head); font-weight: 800; font-size: clamp(2rem, 4.4vw, 3.1rem); color: var(--ink); letter-spacing: -.01em; }
+  .soro :global(.soro-blog-article-date), .soro :global(.soro-blog-article-by) { color: var(--muted); font-size: .95rem; margin: 0; }
+  .soro :global(.soro-blog-article-by) { margin-bottom: 24px; }
+  .soro :global(.soro-blog-article-image) { border-radius: var(--radius); }
+  .soro :global(.soro-blog-article-content) { font-size: 1.05rem; line-height: 1.75; }
+  .soro :global(.soro-blog-article-content h2), .soro :global(.soro-blog-article-content h3) { font-family: var(--font-head); font-weight: 800; color: var(--ink); }
+  .soro :global(.soro-blog-article-content a) { color: var(--blue); }
+  .soro :global(.soro-blog-empty), .soro :global(.soro-blog-loading), .soro :global(.soro-blog-error) { color: var(--muted); }
+  .soro :global(.soro-blog-spinner) { border-top-color: var(--blue); }
+  @media (max-width: 960px) { .soro :global(.soro-blog-list) { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 620px) { .soro :global(.soro-blog-list) { grid-template-columns: 1fr; } .soro :global(.soro-blog-card-image) { height: auto; } }
+  .list { grid-template-columns: repeat(3, 1fr); list-style: none; padding: 0; margin: 0; }
+  .pager { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 48px; flex-wrap: wrap; }
+  .pager__pages { display: flex; gap: 6px; list-style: none; padding: 0; margin: 0; }
+  .pager__n { display: inline-grid; place-items: center; min-width: 40px; height: 40px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--line); text-decoration: none; color: inherit; font-weight: 600; }
+  .pager__n.is-active { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .pager .btn :global(svg) { transition: none; }
+  .pager a[rel="prev"] :global(svg) { transform: rotate(180deg); }
+  @media (max-width: 960px) { .list { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 620px) { .list { grid-template-columns: 1fr; } }
+</style>

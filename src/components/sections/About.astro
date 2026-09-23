@@ -1,0 +1,33 @@
+---
+import { Image } from 'astro:assets';
+import photo from '../../assets/andres/andres-vergara-circle.jpg';
+import Icon from '../Icon.astro';
+import { SITE } from '../../config/site';
+import { t, type Lang } from '../../i18n/copy';
+const { lang } = Astro.props as { lang: Lang };
+const c = t(lang).about;
+---
+<section class="section section--soft" id="sobre-mi">
+  <div class="container about">
+    <Image src={photo} widths={[280, 420, 560]} sizes="(max-width: 860px) 60vw, 340px" alt={c.photoAlt} loading="lazy" class="about__img" />
+    <div>
+      <p class="eyebrow">{c.eyebrow}</p>
+      <h2>{c.title}</h2>
+      <p>{c.p1}</p>
+      <p>{c.p2}</p>
+      <div class="about__ctas">
+        <a class="btn btn--ghost" href={SITE.founder.linkedin} target="_blank" rel="noopener me"><Icon name="linkedin" />{c.cta}</a>
+        <a class="btn btn--ghost" href={SITE.founder.certificate.url} target="_blank" rel="noopener"><Icon name="award" />{c.certCta}</a>
+        <a class="btn btn--ghost" href={`https://www.instagram.com/${SITE.instagramHandle}/`} target="_blank" rel="noopener me"><Icon name="instagram" />@{SITE.instagramHandle}</a>
+      </div>
+    </div>
+  </div>
+</section>
+<style>
+  .about { display: grid; grid-template-columns: 340px 1fr; gap: clamp(32px, 6vw, 72px); align-items: center; }
+  .about :global(.about__img) { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 50%; box-shadow: 0 0 0 8px #fff, 0 0 0 11px var(--yellow), var(--shadow-lg); }
+  .about p { font-size: 1.08rem; }
+  .about__ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+  .about__ctas :global(svg) { color: var(--blue); }
+  @media (max-width: 860px) { .about { grid-template-columns: 1fr; } .about :global(.about__img) { width: min(60vw, 280px); margin-inline: auto; } }
+</style>

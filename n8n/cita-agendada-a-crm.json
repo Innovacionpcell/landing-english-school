@@ -1,0 +1,133 @@
+{
+  "name": "GD Landing – Cita agendada (Google Calendar) → CRM + aviso",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "eventCreated",
+        "calendarId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": ""
+        },
+        "options": {}
+      },
+      "id": "b1000000-0000-4000-8000-000000000001",
+      "name": "Nuevo evento en Calendar",
+      "type": "n8n-nodes-base.googleCalendarTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "Selecciona el calendario donde tu Agenda de citas guarda las reservas (normalmente tu calendario principal). El nodo siguiente filtra para que solo pasen las reservas y no tus eventos personales."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Detecta reservas de la Agenda de citas de Google y extrae los datos del invitado.\n// Google marca las reservas con extendedProperties.shared['goo.createdBySet'] y pone\n// \"Programada por / nombre / correo / teléfono\" + campos del formulario en la descripción.\nconst PALABRA_CLAVE = 'Diagnóstico';\n\nconst e = $input.first().json;\nconst titulo = e.summary || '';\nconst descHtml = e.description || '';\nconst shared = (e.extendedProperties && e.extendedProperties.shared) || {};\n\nconst esReserva = Object.keys(shared).some((k) => k.startsWith('goo.createdBy'))\n  || /Programada por|Booked by/i.test(descHtml)\n  || (PALABRA_CLAVE && titulo.toLowerCase().includes(PALABRA_CLAVE.toLowerCase()));\nif (!esReserva) return [];\n\n// Descripción → líneas de texto plano\nconst lines = descHtml.replace(/<br\\s*\\/?>/gi, '\\n').replace(/<\\/p>/gi, '\\n').replace(/<[^>]+>/g, '')\n  .split('\\n').map((s) => s.replace(/&nbsp;/g, ' ').trim()).filter(Boolean);\n\n// Bloque \"Programada por\": nombre, correo, teléfono\nlet nombreDesc = null, correoDesc = null, telDesc = null;\nconst i = lines.findIndex((l) => /^(Programada por|Booked by)$/i.test(l));\nif (i >= 0) {\n  for (const l of lines.slice(i + 1, i + 5)) {\n    if (!correoDesc && /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/.test(l)) correoDesc = l.toLowerCase();\n    else if (!telDesc && /^[+\\d][\\d\\s()-]{6,}$/.test(l)) telDesc = l;\n    else if (!nombreDesc && !/^[+\\d]/.test(l)) nombreDesc = l;\n  }\n}\n// Campos personalizados del formulario: etiqueta en <b>, valor en la línea siguiente\nconst campo = (re) => {\n  const m = descHtml.match(new RegExp('<b>\\\\s*(' + re + ')[^<]*</b>\\\\s*\\\\n?\\\\s*([^<\\\\n]+)', 'i'));\n  return m ? m[2].trim() : null;\n};\n\n// Invitado: asistente externo si existe; si no, el del bloque \"Programada por\"\nconst ext = (e.attendees || []).find((a) => !a.self && !a.organizer);\nconst correo = (ext && ext.email ? ext.email : correoDesc || '').toLowerCase();\nconst invitado = (ext && ext.displayName) || nombreDesc || correo || 'Invitado';\nif (!correo) return [];\n\n// Nombre entre paréntesis en el título \"Diagnóstico ... (Nombre)\"\nconst mTit = titulo.match(/\\(([^)]+)\\)\\s*$/);\n\nreturn [{ json: {\n  eventId: e.id,\n  titulo,\n  inicio: e.start?.dateTime || e.start?.date,\n  fin: e.end?.dateTime || e.end?.date,\n  meet: e.hangoutLink || null,\n  link: e.htmlLink,\n  invitado: (mTit && mTit[1]) || invitado,\n  correo,\n  telefono: telDesc || campo('Tel[eé]fono|WhatsApp'),\n  empresa: campo('Empresa'),\n  ubicacion: campo('Ciudad'),\n  servicio: campo('servicio'),\n  descripcion: lines.join(' | '),\n}}];"
+      },
+      "id": "b1000000-0000-4000-8000-000000000002",
+      "name": "Filtrar reservas de la agenda",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://portal.growthdigital.marketing/api/crm/webhook/990e579f3dee4042d0c6ccbb88050a881b8b",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "idempotency-key",
+              "value": "=cal-{{ $json.eventId }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  nombre: $json.invitado,\n  email: $json.correo,\n  telefono: $json.telefono,\n  empresa: $json.empresa,\n  ubicacion: $json.ubicacion,\n  servicioInteres: $json.servicio,\n  etapa: 'Cita agendada',\n  citaInicio: $json.inicio,\n  citaFin: $json.fin,\n  citaMeet: $json.meet,\n  citaLink: $json.link,\n  form: 'Agenda de citas Google Calendar',\n  mensaje: 'Cita agendada desde la landing: ' + $json.titulo\n}) }}",
+        "options": {
+          "timeout": 8000
+        }
+      },
+      "id": "b1000000-0000-4000-8000-000000000003",
+      "name": "Actualizar CRM (etapa cita)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        180
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "fromEmail": "Growth Digital <info@growthdigital.marketing>",
+        "toEmail": "innovacionpcell@gmail.com",
+        "subject": "=📅 Cita agendada: {{ $json.invitado }} · {{ DateTime.fromISO($json.inicio).setZone('America/Bogota').setLocale('es').toFormat('EEE d LLL · h:mm a') }}",
+        "emailFormat": "html",
+        "html": "={{ (() => { const c = $json;  const esc = (s) => String(s ?? '—').replace(/[&<>\"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c])); const btn = (href, label, bg) => href ? `<td style=\"padding:0 8px 10px 0\"><a href=\"${href}\" style=\"display:inline-block;background:${bg};color:#fff;font-weight:700;font-size:14px;padding:12px 18px;border-radius:10px;text-decoration:none;white-space:nowrap;font-family:Roboto,Arial,sans-serif\">${label}</a></td>` : ''; const row = (k, v) => `<tr><td style=\"padding:9px 12px;border-bottom:1px solid #eef0f3;color:#5f6368;font-size:13px;width:140px;vertical-align:top\"><b>${k}</b></td><td style=\"padding:9px 12px;border-bottom:1px solid #eef0f3;font-size:14px;color:#202124\">${v}</td></tr>`; const shell = ({ eyebrow, title, subtitle, rows, buttons, tip, footer }) => `<!DOCTYPE html><html><body style=\"margin:0;background:#f1f3f4;padding:24px 12px;font-family:Roboto,Arial,sans-serif\"> <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06)\"> <tr><td style=\"height:6px;background:linear-gradient(90deg,#1a73e8 0 25%,#ea4335 25% 50%,#fbbc04 50% 75%,#34a853 75% 100%);font-size:0\">&nbsp;</td></tr> <tr><td style=\"padding:24px 28px 8px\"><div style=\"font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#1558b8;font-weight:700\">${eyebrow}</div> <h1 style=\"margin:6px 0 4px;font-size:22px;color:#202124\">${title}</h1><div style=\"color:#5f6368;font-size:14px\">${subtitle}</div></td></tr> <tr><td style=\"padding:12px 28px 4px\"><table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\"><tr>${buttons.join('')}</tr></table></td></tr> <tr><td style=\"padding:8px 28px 16px\"><table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"border:1px solid #eef0f3;border-radius:12px;overflow:hidden\">${rows.join('')}</table></td></tr> ${tip ? `<tr><td style=\"padding:0 28px 20px\"><div style=\"background:#e8f0fe;border-left:4px solid #1a73e8;border-radius:8px;padding:12px 14px;font-size:13px;color:#174ea6\">${tip}</div></td></tr>` : ''} <tr><td style=\"padding:14px 28px 22px;border-top:1px solid #eef0f3;font-size:12px;color:#80868b\">${footer}</td></tr> </table></body></html>`; \nconst tz = 'America/Bogota';\nconst ini = DateTime.fromISO(c.inicio).setZone(tz); const fin = DateTime.fromISO(c.fin).setZone(tz);\nconst fecha = ini.setLocale('es').toFormat(\"cccc d 'de' LLLL\"); const hora = `${ini.toFormat('h:mm a')} – ${fin.toFormat('h:mm a')}`;\nconst tel = String(c.telefono || '').replace(/\\D/g, '');\nconst first = (c.invitado || '').split(' ')[0];\nconst msgWA = encodeURIComponent(`Hola ${first}, soy Carlos Andrés de Growth Digital. Confirmo nuestro diagnóstico gratuito el ${fecha} a las ${ini.toFormat('h:mm a')} (hora Colombia). Te llegará la invitación con el enlace de Google Meet. ¡Nos vemos!`);\nconst buttons = [\n  btn(c.meet, '🎥 Abrir Meet', '#1a73e8'),\n  btn(tel ? `https://wa.me/${tel}?text=${msgWA}` : null, '💬 Confirmar por WhatsApp', '#25d366'),\n  btn(c.link, '📅 Ver en Calendar', '#5f6368'),\n  btn('https://portal.growthdigital.marketing/', '📊 Ver en CRM', '#202124'),\n];\nconst rows = [\n  row('Cuándo', `<b>${esc(fecha)}</b><br>${esc(hora)} (hora Colombia)`),\n  row('Invitado', esc(c.invitado)), row('Correo', `<a href=\"mailto:${esc(c.correo)}\" style=\"color:#1a73e8\">${esc(c.correo)}</a>`),\n  row('WhatsApp / Tel', esc(c.telefono || '—')), row('Empresa', esc(c.empresa || '—')), row('Ciudad', esc(c.ubicacion || '—')),\n  row('Servicio', esc(c.servicio || '—')), row('Evento', esc(c.titulo)),\n];\nconst tip = `<b>Prepárate:</b> revisa su web y redes antes de la llamada, abre su ficha en el CRM (ya quedó en etapa <b>Cita agendada</b>) y confírmale por WhatsApp el día anterior.`;\nreturn shell({ eyebrow: 'Cita agendada · Diagnóstico gratuito', title: esc(c.invitado), subtitle: `${esc(fecha)} · ${esc(hora)}`, rows, buttons, tip, footer: 'Enviado por tu automatización n8n · Growth Digital · Medellín' });\n})() }}",
+        "options": {
+          "appendAttribution": false,
+          "replyTo": "info@growthdigital.marketing"
+        }
+      },
+      "id": "b1000000-0000-4000-8000-000000000004",
+      "name": "Aviso cita a mi correo",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        480,
+        420
+      ]
+    }
+  ],
+  "connections": {
+    "Nuevo evento en Calendar": {
+      "main": [
+        [
+          {
+            "node": "Filtrar reservas de la agenda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrar reservas de la agenda": {
+      "main": [
+        [
+          {
+            "node": "Actualizar CRM (etapa cita)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Aviso cita a mi correo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "instanceNote": "Funciona con tu calendario principal: el trigger escucha el calendario donde la Agenda de citas guarda las reservas y el nodo Code deja pasar solo las reservas (invitado externo + palabra clave del título o respuestas del formulario). Misma URL de webhook que el formulario. Si el lead ya existe, el CRM lo mueve a 'Cita agendada' y registra la reunión; si no, lo crea en esa etapa."
+  }
+}

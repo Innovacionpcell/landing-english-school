@@ -1,0 +1,188 @@
+---
+import Icon from '../Icon.astro';
+import { SITE } from '../../config/site';
+import { t, localePath, type Lang } from '../../i18n/copy';
+import { PUBLIC_N8N_WEBHOOK_URL } from 'astro:env/client';
+const { lang } = Astro.props as { lang: Lang };
+const c = t(lang).contact;
+const f = c.fields;
+const webhook = PUBLIC_N8N_WEBHOOK_URL ?? '';
+const thanksAgenda = localePath(lang, lang === 'en' ? '/thanks/' : '/gracias/') + '?s=agenda';
+const thanksGeneral = localePath(lang, lang === 'en' ? '/thanks/' : '/gracias/') + '?s=general';
+---
+<section class="section section--soft" id="agenda">
+  <div class="container ct">
+    <div class="ct__side">
+      <p class="eyebrow">{c.eyebrow}</p>
+      <h2>{c.title}</h2>
+      <p class="lead">{c.lead}</p>
+      <ol class="ct__steps">
+        {c.steps.map((s, i) => <li><span>{i + 1}</span>{s}</li>)}
+      </ol>
+      <div class="ct__nap card">
+        <p class="ct__h">{c.napTitle}</p>
+        <p><Icon name="pin" />{SITE.address.street}, {SITE.address.neighborhood}, {SITE.address.city}</p>
+        <p><Icon name="clock" />{c.hours}</p>
+        <p><Icon name="phone" /><a href={`tel:${SITE.phone}`}>{SITE.phoneDisplay}</a></p>
+        <p><Icon name="mail" /><a href={`mailto:${SITE.email}`}>{SITE.email}</a></p>
+        <a class="ct__map" href={SITE.mapsUrl} target="_blank" rel="noopener">{c.mapCta} →</a>
+      </div>
+    </div>
+
+    <form class="form card" id="lead-form" method="post" action={webhook || '#agenda'} data-webhook={webhook} data-next-agenda={thanksAgenda} data-next-general={thanksGeneral} data-wa={SITE.whatsapp.split('?')[0]} novalidate>
+      <input type="hidden" name="lang" value={lang} />
+      <input type="hidden" name="page" value="" />
+      <input type="hidden" name="ts" value="" />
+      <input type="hidden" name="utm" value="" />
+      <div class="hp" aria-hidden="true">
+        <label>Website <input type="text" name="website_url" tabindex="-1" autocomplete="off" /></label>
+      </div>
+
+      <div class="field">
+        <label for="lf-name">{f.name} *</label>
+        <input id="lf-name" name="name" type="text" autocomplete="name" required minlength="2" maxlength="80" />
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="lf-email">{f.email} *</label>
+          <input id="lf-email" name="email" type="email" autocomplete="email" inputmode="email" required maxlength="120" />
+        </div>
+        <div class="field">
+          <label for="lf-phone">{f.phone} *</label>
+          <input id="lf-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" required minlength="7" maxlength="20" placeholder={lang === 'es' ? '+57 300 000 0000' : '+1 305 000 0000'} />
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="lf-company">{f.company}</label>
+          <input id="lf-company" name="company" type="text" autocomplete="organization" maxlength="120" />
+        </div>
+        <div class="field">
+          <label for="lf-location">{f.location} *</label>
+          <input id="lf-location" name="location" type="text" autocomplete="address-level2" required minlength="2" maxlength="80" placeholder={f.locationPh} />
+        </div>
+      </div>
+      <fieldset class="field">
+        <legend>{f.service} *</legend>
+        <div class="chips">
+          {c.services.map((s, i) => (
+            <label class="chip-opt">
+              <input type="radio" name="service" value={s.v} required={i === 0} />
+              <span>{s.l}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <div class="field">
+        <label for="lf-msg">{f.message}</label>
+        <textarea id="lf-msg" name="message" rows="3" maxlength="1000"></textarea>
+      </div>
+      <label class="consent">
+        <input type="checkbox" name="consent" value="yes" required />
+        <span>{f.consent} <a href="/privacidad/" target="_blank">{f.privacy}</a>. *</span>
+      </label>
+      <button class="btn form__submit" type="submit" data-label={c.submit} data-sending={c.sending}>
+        <Icon name="calendar" /><span>{c.submit}</span>
+      </button>
+      <p class="form__err" role="alert" hidden>{c.error}</p>
+      <p class="form__or">{c.or} <a href={SITE.whatsapp} target="_blank" rel="noopener"><Icon name="whatsapp" />WhatsApp</a></p>
+    </form>
+  </div>
+</section>
+
+<script>
+  const form = document.getElementById('lead-form') as HTMLFormElement | null;
+  if (form) {
+    const set = (n: string, v: string) => { const el = form.elements.namedItem(n) as HTMLInputElement | null; if (el) el.value = v; };
+    set('ts', String(Date.now()));
+    set('page', location.pathname);
+    // Atribución: guarda UTMs / gclid / fbclid de la primera visita de la sesión
+    try {
+      const qs = new URLSearchParams(location.search);
+      const keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'gbraid', 'wbraid', 'fbclid'];
+      const found: Record<string, string> = {};
+      keys.forEach((k) => { const v = qs.get(k); if (v) found[k] = v; });
+      if (Object.keys(found).length) sessionStorage.setItem('gd_attr', JSON.stringify({ ...found, landing: location.href, referrer: document.referrer }));
+      else if (!sessionStorage.getItem('gd_attr')) sessionStorage.setItem('gd_attr', JSON.stringify({ referrer: document.referrer, landing: location.href }));
+      set('utm', sessionStorage.getItem('gd_attr') ?? '');
+    } catch {}
+
+    const btn = form.querySelector<HTMLButtonElement>('.form__submit')!;
+    const err = form.querySelector<HTMLElement>('.form__err')!;
+    const webhook = form.dataset.webhook || '';
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      err.hidden = true;
+      if (!form.checkValidity()) { form.reportValidity(); return; }
+      const body = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
+      const general = body.service === 'Pregunta general';
+      const next = general ? form.dataset.nextGeneral! : form.dataset.nextAgenda!;
+
+      // Sin webhook configurado (PUBLIC_N8N_WEBHOOK_URL vacío): el lead sale por WhatsApp con el mensaje prellenado
+      if (!webhook) {
+        const msg = `Hola Andrés, soy ${body.name}${body.company ? ` de ${body.company}` : ''}${body.location ? ` (${body.location})` : ''}. Me interesa: ${body.service}.${body.message ? ` ${body.message}` : ''} Mi correo: ${body.email}`;
+        window.open(`${form.dataset.wa}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener');
+        location.assign(next);
+        return;
+      }
+
+      btn.disabled = true;
+      btn.querySelector('span')!.textContent = btn.dataset.sending!;
+      try {
+        const res = await fetch(webhook, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', accept: 'application/json' },
+          body: JSON.stringify({ ...body, userAgent: navigator.userAgent, referrer: document.referrer, origin: location.origin }),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || json.ok === false) throw new Error(json.error || 'error');
+        (window as any).dataLayer?.push({ event: 'generate_lead', lead_service: body.service, lead_id: json.id ?? null });
+        location.assign(json.next || next);
+      } catch {
+        err.hidden = false;
+        btn.disabled = false;
+        btn.querySelector('span')!.textContent = btn.dataset.label!;
+      }
+    });
+  }
+</script>
+
+<style>
+  .ct { display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(32px, 5vw, 64px); align-items: start; }
+  .ct__steps { list-style: none; padding: 0; margin: 8px 0 28px; display: grid; gap: 12px; }
+  .ct__steps li { display: flex; align-items: center; gap: 12px; font-weight: 500; color: var(--ink); }
+  .ct__steps span { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--blue); color: #fff; font-family: var(--font-head); font-weight: 700; font-size: .9rem; flex: none; }
+  .ct__nap { padding: 22px 24px; }
+  .ct__nap p { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 10px; font-size: .96rem; }
+  .ct__nap :global(svg) { width: 20px; height: 20px; flex: none; color: var(--blue); margin-top: 2px; }
+  .ct__h { font-family: var(--font-head); font-weight: 700; color: var(--ink); }
+  .ct__map { font-family: var(--font-head); font-weight: 700; text-decoration: none; }
+
+  .form { display: grid; gap: 18px; box-shadow: var(--shadow-lg); border: 0; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .field { display: grid; gap: 6px; border: 0; padding: 0; margin: 0; min-width: 0; }
+  .field label, legend { font-weight: 500; color: var(--ink); font-size: .95rem; padding: 0; margin-bottom: 6px; }
+  input[type='text'], input[type='email'], input[type='tel'], textarea {
+    width: 100%; font: inherit; font-size: 1rem; color: var(--ink); background: #fff;
+    border: 1.5px solid #d5dbe5; border-radius: 12px; padding: 13px 14px; min-height: 50px; transition: border-color .15s, box-shadow .15s;
+  }
+  textarea { resize: vertical; min-height: 90px; }
+  input:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 4px rgb(26 115 232 / .15); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip-opt { position: relative; }
+  .chip-opt input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .chip-opt span { display: inline-block; padding: 10px 16px; border: 1.5px solid #d5dbe5; border-radius: 999px; font-size: .94rem; cursor: pointer; transition: .15s; }
+  .chip-opt input:checked + span { background: #e8f0fe; border-color: var(--blue); color: #174ea6; font-weight: 600; }
+  .chip-opt input:focus-visible + span { outline: 3px solid var(--blue); outline-offset: 2px; }
+  .consent { display: flex; gap: 10px; align-items: flex-start; font-size: .92rem; color: var(--muted); }
+  .consent input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--blue); flex: none; }
+  .form__submit { width: 100%; min-height: 56px; font-size: 1.05rem; }
+  .form__submit:disabled { opacity: .7; cursor: progress; }
+  .form__err { margin: 0; color: #b3261e; background: #fce8e6; padding: 12px 14px; border-radius: 10px; font-size: .95rem; }
+  .form__or { margin: 0; text-align: center; font-size: .92rem; color: var(--muted); }
+  .form__or a { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+  .form__or :global(svg) { width: 18px; height: 18px; color: #25d366; }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  @media (max-width: 900px) { .ct { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+</style>

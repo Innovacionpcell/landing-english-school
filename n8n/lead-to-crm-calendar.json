@@ -1,0 +1,262 @@
+{
+  "name": "GD Landing – Lead a CRM + Correo + Calendar",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "gd-landing-lead",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://growthdigital.marketing,http://localhost:4321",
+          "rawBody": false
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000001",
+      "name": "Webhook formulario",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "gd-landing-lead"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Valida, limpia y normaliza el lead. Misma lógica que tenía el endpoint del sitio.\nconst SERVICES = ['Google/Meta Ads', 'Diseño Web SEO/SEM', 'Automatización con IA', 'Marketing Integral', 'Pregunta general'];\nconst EMAIL = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/;\nconst clean = (v, max) => String(v ?? '').replace(/[\\u0000-\\u001f\\u007f]/g, ' ').trim().slice(0, max);\n\nconst raw = $input.first().json.body ?? $input.first().json;\nconst headers = $input.first().json.headers ?? {};\nconst ip = (headers['x-forwarded-for'] || headers['x-real-ip'] || '').split(',')[0].trim() || null;\n\n// Anti-spam: honeypot + tiempo mínimo en página (2.5 s)\nconst ts = Number(raw.ts);\nconst spam = !!clean(raw.website_url, 200) || (ts && Date.now() - ts < 2500);\n\nconst nombre = clean(raw.name, 80);\nconst email = clean(raw.email, 120).toLowerCase();\nconst telefono = clean(raw.phone, 20).replace(/[^\\d+()\\s-]/g, '');\nconst servicio = clean(raw.service, 40);\nconst idioma = raw.lang === 'en' ? 'en' : 'es';\n\nlet error = null;\nif (nombre.length < 2) error = 'name';\nelse if (!EMAIL.test(email)) error = 'email';\nelse if (telefono.replace(/\\D/g, '').length < 7) error = 'phone';\nelse if (!SERVICES.includes(servicio)) error = 'service';\nelse if (!(raw.consent === 'yes' || raw.consent === 'on' || raw.consent === true)) error = 'consent';\n\nlet utm = {};\ntry { const p = JSON.parse(String(raw.utm || '{}')); for (const [k, v] of Object.entries(p)) if (typeof v === 'string') utm[k.slice(0, 30)] = v.slice(0, 500); } catch {}\n\nconst leadCalificado = servicio !== 'Pregunta general';\nconst base = idioma === 'en' ? '/en/thanks/' : '/gracias/';\nconst next = `${base}?s=${leadCalificado ? 'agenda' : 'general'}`;\n\nreturn [{\n  json: {\n    spam, error, valid: !spam && !error,\n    lead: {\n      id: $execution.id + '-' + Date.now().toString(36),\n      nombre, email, telefono,\n      empresa: clean(raw.company, 120),\n      ubicacion: clean(raw.location, 80),\n      servicioInteres: servicio,\n      leadCalificado,\n      mensaje: clean(raw.message, 1000),\n      idioma,\n      pagina: clean(raw.page, 200) || '/',\n      fuente: 'landing-web',\n      canal: utm.gclid || utm.gbraid || utm.wbraid ? 'google-ads' : utm.fbclid ? 'meta-ads' : (utm.utm_source || 'organico'),\n      campana: utm.utm_campaign ?? null,\n      gclid: utm.gclid ?? null,\n      utm,\n      consentimiento: true,\n      fecha: new Date().toISOString(),\n      fechaLocal: new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'full', timeStyle: 'short' }) + ' (Colombia)',\n      ip,\n      userAgent: clean(raw.userAgent, 300) || null,\n      referrer: clean(raw.referrer, 300) || null,\n    },\n    next,\n  },\n}];"
+      },
+      "id": "a1000000-0000-4000-8000-000000000002",
+      "name": "Validar y normalizar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000003",
+      "name": "¿Lead válido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://portal.growthdigital.marketing/api/crm/webhook/990e579f3dee4042d0c6ccbb88050a881b8b",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "idempotency-key",
+              "value": "={{ $json.lead.id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  nombre: $json.lead.nombre,\n  email: $json.lead.email,\n  telefono: $json.lead.telefono,\n  empresa: $json.lead.empresa,\n  ubicacion: $json.lead.ubicacion,\n  servicioInteres: $json.lead.servicioInteres,\n  leadCalificado: $json.lead.leadCalificado,\n  mensaje: $json.lead.mensaje,\n  form: 'Formulario landing',\n  landing_page: $json.lead.pagina,\n  utm_source: $json.lead.utm.utm_source || null,\n  utm_medium: $json.lead.utm.utm_medium || null,\n  utm_campaign: $json.lead.utm.utm_campaign || null,\n  utm_content: $json.lead.utm.utm_content || null,\n  utm_term: $json.lead.utm.utm_term || null,\n  gclid: $json.lead.gclid,\n  fbclid: $json.lead.utm.fbclid || null,\n  idioma: $json.lead.idioma,\n  referrer: $json.lead.referrer,\n  consentimiento: 'si',\n  lead_id_landing: $json.lead.id\n}) }}",
+        "options": {
+          "timeout": 8000
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000004",
+      "name": "CRM Growth Digital (webhook)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        760,
+        180
+      ],
+      "onError": "continueRegularOutput",
+      "notesInFlow": true,
+      "notes": "URL = https://portal.growthdigital.marketing/api/crm/webhook/<token de la fuente 'Landing growthdigital.marketing'> (variable GD_CRM_WEBHOOK_URL). Un 409 significa lead repetido (mismo correo/teléfono): no es error."
+    },
+    {
+      "parameters": {
+        "fromEmail": "Growth Digital <info@growthdigital.marketing>",
+        "toEmail": "innovacionpcell@gmail.com",
+        "subject": "=🚀 Nuevo lead landing: {{ $('Validar y normalizar').item.json.lead.nombre }} · {{ $('Validar y normalizar').item.json.lead.servicioInteres }}",
+        "emailFormat": "html",
+        "html": "={{ (() => { const l = $('Validar y normalizar').item.json.lead;  const esc = (s) => String(s ?? '—').replace(/[&<>\"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c])); const btn = (href, label, bg) => href ? `<td style=\"padding:0 8px 10px 0\"><a href=\"${href}\" style=\"display:inline-block;background:${bg};color:#fff;font-weight:700;font-size:14px;padding:12px 18px;border-radius:10px;text-decoration:none;white-space:nowrap;font-family:Roboto,Arial,sans-serif\">${label}</a></td>` : ''; const row = (k, v) => `<tr><td style=\"padding:9px 12px;border-bottom:1px solid #eef0f3;color:#5f6368;font-size:13px;width:140px;vertical-align:top\"><b>${k}</b></td><td style=\"padding:9px 12px;border-bottom:1px solid #eef0f3;font-size:14px;color:#202124\">${v}</td></tr>`; const shell = ({ eyebrow, title, subtitle, rows, buttons, tip, footer }) => `<!DOCTYPE html><html><body style=\"margin:0;background:#f1f3f4;padding:24px 12px;font-family:Roboto,Arial,sans-serif\"> <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06)\"> <tr><td style=\"height:6px;background:linear-gradient(90deg,#1a73e8 0 25%,#ea4335 25% 50%,#fbbc04 50% 75%,#34a853 75% 100%);font-size:0\">&nbsp;</td></tr> <tr><td style=\"padding:24px 28px 8px\"><div style=\"font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#1558b8;font-weight:700\">${eyebrow}</div> <h1 style=\"margin:6px 0 4px;font-size:22px;color:#202124\">${title}</h1><div style=\"color:#5f6368;font-size:14px\">${subtitle}</div></td></tr> <tr><td style=\"padding:12px 28px 4px\"><table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\"><tr>${buttons.join('')}</tr></table></td></tr> <tr><td style=\"padding:8px 28px 16px\"><table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"border:1px solid #eef0f3;border-radius:12px;overflow:hidden\">${rows.join('')}</table></td></tr> ${tip ? `<tr><td style=\"padding:0 28px 20px\"><div style=\"background:#e8f0fe;border-left:4px solid #1a73e8;border-radius:8px;padding:12px 14px;font-size:13px;color:#174ea6\">${tip}</div></td></tr>` : ''} <tr><td style=\"padding:14px 28px 22px;border-top:1px solid #eef0f3;font-size:12px;color:#80868b\">${footer}</td></tr> </table></body></html>`; \nconst tel = String(l.telefono || '').replace(/\\D/g, '');\nconst first = (l.nombre || '').split(' ')[0];\nconst msgWA = encodeURIComponent(`Hola ${first}, soy Carlos Andrés de Growth Digital. Recibí tu solicitud sobre ${l.servicioInteres} y quiero ayudarte a vender más. ¿Ya elegiste hora para tu diagnóstico gratuito? Si prefieres, te la agendo yo: cuéntame qué día y hora te sirven.`);\nconst buttons = [\n  btn(tel ? `https://wa.me/${tel}?text=${msgWA}` : null, '💬 WhatsApp al cliente', '#25d366'),\n  btn(tel ? `tel:${l.telefono}` : null, '📞 Llamar', '#1a73e8'),\n  btn(`mailto:${l.email}?subject=${encodeURIComponent('Tu diagnóstico gratuito · Growth Digital')}`, '✉️ Responder', '#5f6368'),\n  btn('https://portal.growthdigital.marketing/', '📊 Ver en CRM', '#202124'),\n];\nconst rows = [\n  row('Nombre', esc(l.nombre)), row('Correo', `<a href=\"mailto:${esc(l.email)}\" style=\"color:#1a73e8\">${esc(l.email)}</a>`),\n  row('WhatsApp / Tel', esc(l.telefono)), row('Empresa / web', esc(l.empresa || '—')), row('Ciudad / país', esc(l.ubicacion || '—')),\n  row('Servicio', `<b>${esc(l.servicioInteres)}</b>`), row('Mensaje', esc(l.mensaje || '—')),\n  row('Origen', `${esc(l.canal)}${l.campana ? ' · ' + esc(l.campana) : ''} · ${esc(l.idioma)}`), row('Página', esc(l.pagina)),\n  row('Fecha', esc(l.fechaLocal || l.fecha)), row('ID', `<span style=\"color:#80868b\">${esc(l.id)}</span>`),\n];\nconst tip = l.leadCalificado\n  ? `<b>Lead calificado.</b> Ahora está eligiendo hora en tu agenda. Si en 30 min no llega el correo “📅 Cita agendada”, escríbele por WhatsApp: los leads contactados en la primera hora cierran hasta 7× más.`\n  : `<b>Pregunta general.</b> Respóndele hoy mismo por WhatsApp o correo y, si hay interés, mándale tu agenda: https://calendar.app.google/oCftwJiTxdSKTk3L7`;\nreturn shell({ eyebrow: 'Nuevo lead · growthdigital.marketing', title: esc(l.nombre), subtitle: `${esc(l.servicioInteres)} · ${esc(l.ubicacion || 'Sin ciudad')}`, rows, buttons, tip, footer: 'Enviado por tu automatización n8n · Growth Digital · Medellín' });\n})() }}",
+        "options": {
+          "appendAttribution": false,
+          "replyTo": "info@growthdigital.marketing"
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000005",
+      "name": "Aviso a mi correo",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        760,
+        420
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, id: $('Validar y normalizar').item.json.lead.id, next: $('Validar y normalizar').item.json.next }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000006",
+      "name": "Responder OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1020,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json.spam ? { ok: true, id: 'x', next: '/gracias/?s=general' } : { ok: false, error: $json.error }) }}",
+        "options": {
+          "responseCode": "={{ $json.spam ? 200 : 422 }}"
+        }
+      },
+      "id": "a1000000-0000-4000-8000-000000000007",
+      "name": "Responder error / spam",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        760,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000008",
+      "name": "Esperar CRM + correo",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1000,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook formulario": {
+      "main": [
+        [
+          {
+            "node": "Validar y normalizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar y normalizar": {
+      "main": [
+        [
+          {
+            "node": "¿Lead válido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Lead válido?": {
+      "main": [
+        [
+          {
+            "node": "CRM Growth Digital (webhook)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Aviso a mi correo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder error / spam",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM Growth Digital (webhook)": {
+      "main": [
+        [
+          {
+            "node": "Esperar CRM + correo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aviso a mi correo": {
+      "main": [
+        [
+          {
+            "node": "Esperar CRM + correo",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Esperar CRM + correo": {
+      "main": [
+        [
+          {
+            "node": "Responder OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "meta": {
+    "instanceNote": "URL del CRM ya escrita en el nodo HTTP (fuente 'Landing growthdigital.marketing'). Credencial Gmail OAuth2 en el nodo 'Aviso a mi correo'."
+  }
+}

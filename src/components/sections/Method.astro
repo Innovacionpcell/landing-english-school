@@ -1,0 +1,38 @@
+---
+import { t, type Lang } from '../../i18n/copy';
+const { lang } = Astro.props as { lang: Lang };
+const c = t(lang).method;
+const colors = ['blue', 'red', 'yellow', 'green'];
+---
+<section class="section section--soft" id="metodo">
+  <div class="container">
+    <div class="section__head section__head--center">
+      <p class="eyebrow">{c.eyebrow}</p>
+      <h2>{c.title}</h2>
+    </div>
+    <ol class="steps">
+      {c.steps.map((s, i) => (
+        <li class={`dot--${colors[i]}`}>
+          <span class="steps__n">{i + 1}</span>
+          <h3>{s.t}</h3>
+          <p>{s.d}</p>
+        </li>
+      ))}
+    </ol>
+    <p class="center"><a class="btn" href="#agenda" data-cta="method">{t(lang).hero.cta1}</a></p>
+  </div>
+</section>
+<style>
+  .steps { list-style: none; padding: 0; margin: 0 0 48px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; counter-reset: s; position: relative; }
+  .steps::before { content: ''; position: absolute; left: 6%; right: 6%; top: 27px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, var(--blue), var(--red), var(--yellow), var(--green)); opacity: .35; }
+  .steps li { position: relative; text-align: center; padding: 0 8px; }
+  .steps__n { position: relative; display: grid; place-items: center; width: 56px; height: 56px; margin: 0 auto 18px; border-radius: 50%; background: #fff; border: 3px solid var(--c); color: var(--ink); font-family: var(--font-head); font-weight: 800; font-size: 1.3rem; }
+  .steps p { color: var(--muted); margin: 0; }
+  .center { text-align: center; margin: 0; }
+  @media (max-width: 860px) {
+    .steps { grid-template-columns: 1fr; gap: 28px; }
+    .steps::before { left: 27px; right: auto; top: 10px; bottom: 10px; width: 3px; height: auto; background: linear-gradient(180deg, var(--blue), var(--red), var(--yellow), var(--green)); }
+    .steps li { text-align: left; padding-left: 78px; }
+    .steps__n { position: absolute; left: 0; top: -6px; margin: 0; }
+  }
+</style>

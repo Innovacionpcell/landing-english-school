@@ -1,0 +1,78 @@
+---
+import { Image } from 'astro:assets';
+import logoIcon from '../assets/brand/logo-icon.png';
+import Icon from './Icon.astro';
+import Wordmark from './Wordmark.astro';
+import { SITE } from '../config/site';
+import { t, localePath, type Lang } from '../i18n/copy';
+interface Props { lang: Lang; alternates?: { es?: string; en?: string } }
+const { lang, alternates } = Astro.props;
+const c = t(lang);
+const home = localePath(lang, '/');
+const other = lang === 'es' ? alternates?.en ?? '/en/' : alternates?.es ?? '/';
+const links = [
+  { href: `${home}#soluciones`, label: c.nav.solutions },
+  { href: `${home}#metodo`, label: c.nav.method },
+  { href: `${home}#tecnologia`, label: c.nav.tech },
+  { href: `${home}#resenas`, label: c.nav.reviews },
+  { href: '/blog/', label: c.nav.blog },
+];
+---
+<header class="hdr">
+  <div class="container hdr__in">
+    <a href={home} class="brand">
+      <Image src={logoIcon} alt="" width={36} height={41} densities={[1, 2]} loading="eager" />
+      <Wordmark />
+    </a>
+    <nav class="nav" id="nav" aria-label={lang === 'es' ? 'Principal' : 'Main'}>
+      <ul>
+        {links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      </ul>
+      <a class="lang" href={other} hreflang={lang === 'es' ? 'en' : 'es'} aria-label={c.nav.switchLangLabel}>{c.nav.switchLang}</a>
+      <a class="btn btn--sm btn--portal" href={SITE.portalUrl} target="_blank" rel="noopener" data-cta="portal" title={c.nav.portal}><Icon name="portal" /><span>{c.nav.portal}</span></a>
+      <a class="btn btn--sm" href={`${home}#agenda`} data-cta="header">{c.nav.cta}</a>
+    </nav>
+    <button class="burger" type="button" aria-controls="nav" aria-expanded="false" aria-label={c.nav.menu}>
+      <Icon name="menu" />
+    </button>
+  </div>
+</header>
+
+<script>
+  const b = document.querySelector<HTMLButtonElement>('.burger');
+  const n = document.getElementById('nav');
+  b?.addEventListener('click', () => {
+    const open = b.getAttribute('aria-expanded') === 'true';
+    b.setAttribute('aria-expanded', String(!open));
+    n?.classList.toggle('is-open', !open);
+  });
+  n?.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).closest('a')) { n.classList.remove('is-open'); b?.setAttribute('aria-expanded', 'false'); }
+  });
+</script>
+
+<style>
+  .hdr { position: sticky; top: 0; z-index: 50; background: rgb(255 255 255 / 0.86); backdrop-filter: saturate(180%) blur(14px); -webkit-backdrop-filter: saturate(180%) blur(14px); border-bottom: 1px solid rgb(230 233 239 / 0.8); }
+  .hdr__in { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 72px; }
+  .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+  .brand :global(img) { width: 34px; height: auto; }
+  .nav { display: flex; align-items: center; gap: 18px; }
+  .nav .btn { white-space: nowrap; }
+  .nav ul { display: flex; gap: 22px; list-style: none; margin: 0 6px 0 0; padding: 0; }
+  .nav ul a { color: var(--ink-2); text-decoration: none; font-weight: 500; font-size: .96rem; }
+  .nav ul a:hover { color: var(--blue); }
+  .btn--portal { --btn-bg: #fff; --btn-fg: var(--ink); border-color: var(--line); }
+  .btn--portal:hover { border-color: var(--blue); color: var(--blue); box-shadow: none; }
+  .btn--portal :global(svg) { color: var(--blue); }
+  .lang { font-family: var(--font-head); font-weight: 700; font-size: .85rem; color: var(--ink); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; }
+  .burger { display: none; background: none; border: 0; padding: 10px; margin-right: -10px; color: var(--ink); cursor: pointer; }
+  @media (max-width: 1280px) and (min-width: 1081px) { .btn--portal span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } .btn--portal { padding: 0 13px; } }
+  @media (max-width: 1080px) {
+    .burger { display: inline-flex; }
+    .nav { position: fixed; inset: 72px 0 auto 0; flex-direction: column; align-items: stretch; gap: 14px; padding: 20px var(--gutter) 28px; background: #fff; border-bottom: 1px solid var(--line); box-shadow: var(--shadow); transform: translateY(-8px); opacity: 0; visibility: hidden; transition: .2s ease; }
+    .nav.is-open { transform: none; opacity: 1; visibility: visible; }
+    .nav ul { flex-direction: column; gap: 4px; }
+    .nav ul a { display: block; padding: 12px 0; font-size: 1.05rem; }
+    .lang { align-self: flex-start; }
+  }
+</style>

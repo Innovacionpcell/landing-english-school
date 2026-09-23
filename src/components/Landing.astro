@@ -1,0 +1,34 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from './sections/Hero.astro';
+import Approach from './sections/Approach.astro';
+import Solutions from './sections/Solutions.astro';
+import Method from './sections/Method.astro';
+import Tech from './sections/Tech.astro';
+import About from './sections/About.astro';
+import Reviews from './sections/Reviews.astro';
+import Instagram from './sections/Instagram.astro';
+import BlogTeaser from './sections/BlogTeaser.astro';
+import Faq from './sections/Faq.astro';
+import Contact from './sections/Contact.astro';
+import { SITE } from '../config/site';
+import { t, type Lang } from '../i18n/copy';
+import { graph, organizationGraph, webPage, faqPage } from '../lib/schema';
+const { lang } = Astro.props as { lang: Lang };
+const c = t(lang);
+const url = `${SITE.url}${lang === 'es' ? '/' : '/en/'}`;
+const schema = graph(organizationGraph(lang), webPage(url, c.meta.title, c.meta.description, lang), faqPage(lang, url));
+---
+<Base lang={lang} title={c.meta.title} description={c.meta.description} ogDescription={c.meta.ogDescription} schema={schema} alternates={{ es: '/', en: '/en/' }}>
+  <Hero lang={lang} />
+  <Approach lang={lang} />
+  <Solutions lang={lang} />
+  <Method lang={lang} />
+  <Tech lang={lang} />
+  <Reviews lang={lang} />
+  <About lang={lang} />
+  <Instagram lang={lang} />
+  <BlogTeaser lang={lang} />
+  <Faq lang={lang} />
+  <Contact lang={lang} />
+</Base>

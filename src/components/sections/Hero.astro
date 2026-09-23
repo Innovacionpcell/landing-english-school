@@ -1,0 +1,90 @@
+---
+import { Picture } from 'astro:assets';
+import hero from '../../assets/andres/andres-hero.jpg';
+import Icon from '../Icon.astro';
+import reviews from '../../data/reviews.json';
+import { SITE } from '../../config/site';
+import { t, type Lang } from '../../i18n/copy';
+const { lang } = Astro.props as { lang: Lang };
+const c = t(lang);
+const rating = reviews.rating.toLocaleString(lang === 'es' ? 'es-CO' : 'en-US', { minimumFractionDigits: 1 });
+---
+<section class="hero">
+  <div class="container hero__grid">
+    <div class="hero__copy">
+      <p class="eyebrow">{c.hero.eyebrow}</p>
+      <h1>{c.hero.h1a} <span class="hl">{c.hero.h1b}</span></h1>
+      <p class="lead">{c.hero.sub}</p>
+      <div class="hero__ctas">
+        <a class="btn" href="#agenda" data-cta="hero">
+          <Icon name="calendar" />{c.hero.cta1}
+        </a>
+        <a class="btn btn--wa" href={SITE.whatsapp} target="_blank" rel="noopener" data-cta="hero-wa">
+          <Icon name="whatsapp" />{c.hero.cta2}
+        </a>
+      </div>
+      <ul class="proof">
+        <li>
+          <a href="#resenas" class="proof__rating">
+            <Icon name="google" />
+            <strong>{rating}</strong>
+            <span class="stars" aria-hidden="true">{[1, 2, 3, 4, 5].map(() => <Icon name="star" />)}</span>
+            <span>{reviews.total} {c.hero.reviews} {c.hero.rating}</span>
+          </a>
+        </li>
+        <li><Icon name="check" class="ok" />{c.hero.badge1}</li>
+        <li><Icon name="check" class="ok" />{c.hero.badge2}</li>
+      </ul>
+    </div>
+    <div class="hero__media">
+      <div class="ring" aria-hidden="true"></div>
+      <Picture
+        src={hero}
+        formats={['avif', 'webp']}
+        widths={[360, 540, 720, 900]}
+        sizes="(max-width: 900px) 78vw, 440px"
+        alt={c.hero.photoAlt}
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+        class="hero__img"
+      />
+      <div class="chip chip--a"><Icon name="search" /><span>SEO local</span></div>
+      <div class="chip chip--b"><Icon name="ai" /><span>IA + n8n</span></div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero { position: relative; overflow: hidden; padding-block: clamp(40px, 7vw, 96px) clamp(56px, 8vw, 110px);
+    background:
+      radial-gradient(900px 480px at 88% 8%, rgb(26 115 232 / .10), transparent 60%),
+      radial-gradient(600px 400px at 0% 100%, rgb(251 188 5 / .12), transparent 60%); }
+  .hero__grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: clamp(32px, 6vw, 72px); align-items: center; }
+  .hl { background: linear-gradient(90deg, var(--blue), #7b61ff 40%, var(--red) 75%, #e3a600); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  @supports not (background-clip: text) { .hl { color: var(--blue); } }
+  .hero .lead { max-width: 580px; margin-bottom: 28px; }
+  .hero__ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 28px; }
+  .proof { display: flex; flex-wrap: wrap; gap: 10px 22px; list-style: none; padding: 0; margin: 0; font-size: .95rem; color: var(--ink-2); }
+  .proof li { display: inline-flex; align-items: center; gap: 8px; }
+  .proof :global(.ok) { width: 18px; height: 18px; color: var(--green); }
+  .proof__rating { display: inline-flex; align-items: center; gap: 8px; color: inherit; text-decoration: none; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px 6px 8px; box-shadow: var(--shadow); }
+  .proof__rating > :global(svg:first-child) { width: 20px; height: 20px; }
+  .proof__rating strong { color: var(--ink); font-size: 1.02rem; }
+  .proof .stars :global(svg) { width: 15px; height: 15px; }
+
+  .hero__media { position: relative; justify-self: center; width: min(100%, 440px); }
+  .hero__media :global(.hero__img) { position: relative; z-index: 1; width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 28px; box-shadow: var(--shadow-lg); }
+  .ring { position: absolute; inset: -14px; border-radius: 36px; background: conic-gradient(from 200deg, var(--blue), var(--red), var(--yellow), var(--green), var(--blue)); opacity: .9; }
+  .ring::after { content: ''; position: absolute; inset: 6px; border-radius: 30px; background: #fff; }
+  .chip { position: absolute; z-index: 2; display: inline-flex; align-items: center; gap: 8px; background: #fff; border-radius: 14px; padding: 10px 14px; font-family: var(--font-head); font-weight: 700; font-size: .88rem; color: var(--ink); box-shadow: 0 12px 30px rgb(15 23 42 / .14); }
+  .chip :global(svg) { width: 20px; height: 20px; }
+  .chip--a { left: -28px; top: 18%; } .chip--a :global(svg) { color: var(--blue); }
+  .chip--b { right: -22px; bottom: 16%; } .chip--b :global(svg) { color: var(--red); }
+
+  @media (max-width: 900px) {
+    .hero__grid { grid-template-columns: 1fr; }
+    .hero__media { width: min(78vw, 380px); margin-top: 16px; }
+    .chip--a { left: -12px; } .chip--b { right: -10px; }
+  }
+</style>
